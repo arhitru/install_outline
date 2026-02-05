@@ -10,7 +10,7 @@ opkg list-installed | grep kmod-tun > /dev/null
 if [ $? -ne 0 ]; then
     echo "kmod-tun is not installed. Exiting."
     opkg install kmod-tun
-    #exit 1
+    exit 0
     echo 'kmod-tun installed'
 fi
 
