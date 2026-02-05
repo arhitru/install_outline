@@ -10,7 +10,6 @@ opkg list-installed | grep kmod-tun > /dev/null
 if [ $? -ne 0 ]; then
     echo "kmod-tun is not installed. Exiting."
     opkg install kmod-tun
-    exit 0
     echo 'kmod-tun installed'
 fi
 
@@ -39,7 +38,7 @@ fi
 # Step 4: Check for tun2socks then move binary to /usr/bin
 # Этап 4: Проверяет наличие tun2socks и перемещает бинарник в /usr/bin
 if [ ! -f "/usr/bin/tun2socks" ]; then
-mv /tmp/tun2socks /usr/bin/
+mv /tmp/tun2socks /usr/bin/ 
 echo 'moving tun2socks to /usr/bin'
 chmod +x /usr/bin/tun2socks
 fi
