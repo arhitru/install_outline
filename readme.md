@@ -10,7 +10,7 @@
 Скачаем скрипт в ОЗУ и дадим права на запуск:
 ```bash
 cd /tmp
-wget https://raw.githubusercontent.com/1andrevich/outline-install-wrt/main/install_outline.sh -O install_outline.sh
+wget https://github.com/arhitru/install_outline/blob/main/install_outline.sh -O install_outline.sh
 chmod +x install_outline.sh
 ```
 
