@@ -7,17 +7,14 @@
 Использоваться будет пакет xjasonlyu/tun2socks. https://github.com/xjasonlyu/tun2socks
 
 Установка
-Скачаем скрипт в ОЗУ и дадим права на запуск:
+Скачаем скрипт в ОЗУ, дадим права на запуск и запустим скрипт:
 ```bash
 cd /tmp
 wget https://raw.githubusercontent.com/arhitru/install_outline/main/install_outline.sh -O install_outline.sh
 chmod +x install_outline.sh
-```
-
-Далее запускаем скрипт: (вам понадобится около 9 Мб свободной памяти роутера)
-```bash
 ./install_outline.sh
 ```
+Понадобится около 9 Мб свободной памяти роутера
 
 Скрипт запросит:
 - IP адрес вашего Сервера Outline (shadowsocks)
