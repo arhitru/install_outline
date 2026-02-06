@@ -10,7 +10,7 @@
 Скачаем скрипт в ОЗУ и дадим права на запуск:
 ```bash
 cd /tmp
-wget https://github.com/arhitru/install_outline/blob/main/install_outline.sh -O install_outline.sh
+wget https://raw.githubusercontent.com/arhitru/install_outline/main/install_outline.sh -O install_outline.sh
 chmod +x install_outline.sh
 ```
 
