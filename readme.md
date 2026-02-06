@@ -37,3 +37,4 @@ chmod +x install_outline.sh
     https://forpes.ru/post/165924
     https://habr.com/ru/articles/743572/
     https://habr.com/ru/articles/767458/
+    https://itdog.info/tochechnaya-marshrutizaciya-po-domenam-na-routere-s-openwrt/
