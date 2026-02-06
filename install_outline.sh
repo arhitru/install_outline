@@ -8,7 +8,7 @@ opkg update
 # Этап 1: Проверяет наличие kmod-tun
 opkg list-installed | grep kmod-tun > /dev/null
 if [ $? -ne 0 ]; then
-    echo "kmod-tun is not installed. Exiting."
+    echo "kmod-tun is not installed."
     opkg install kmod-tun
     echo 'kmod-tun installed'
 fi
@@ -17,9 +17,8 @@ fi
 # Этап 2: Проверяет наличие ip-full
 opkg list-installed | grep ip-full > /dev/null
 if [ $? -ne 0 ]; then
-    echo "ip-full is not installed. Exiting."
+    echo "ip-full is not installed."
     opkg install ip-full
-    #exit 1
     echo 'ip-full installed'
 fi
 
@@ -83,25 +82,25 @@ fi
 
 echo 'found entry into /etc/config/firewall'
 
-# Step 8: Read user variable for OUTLINE HOST IP
-# Этап 8: Считывает пользовательскую переменную для IP-адреса OUTLINE-сервера
+# Step 7: Read user variable for OUTLINE HOST IP
+# Этап 7: Считывает пользовательскую переменную для IP-адреса OUTLINE-сервера
 read -p "Enter Outline Server IP: " OUTLINEIP
 # Read user variable for Outline config
 # Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
 read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
 
-# Step 9. Check for default gateway and save it into DEFGW
-# Этап 9: Проверяет наличие шлюза по умолчанию и сохраняет его в переменную DEFGW
+# Step 8. Check for default gateway and save it into DEFGW
+# Этап 8: Проверяет наличие шлюза по умолчанию и сохраняет его в переменную DEFGW
 DEFGW=$(ip route | grep default | awk '{print $3}')
 echo 'checked default gateway'
 
-# Step 10. Check for default interface and save it into DEFIF
-# Этап 10: Проверяет наличие интерфейса по умолчанию и сохраняет его в переменную DEFIF
+# Step 9. Check for default interface and save it into DEFIF
+# Этап 9: Проверяет наличие интерфейса по умолчанию и сохраняет его в переменную DEFIF
 DEFIF=$(ip route | grep default | awk '{print $5}')
 echo 'checked default interface'
 
-# Step 11: Create script /etc/init.d/tun2socks
-# Этап 11: Создает скрипт /etc/init.d/tun2socks
+# Step 10: Create script /etc/init.d/tun2socks
+# Этап 10: Создает скрипт /etc/init.d/tun2socks
 if [ ! -f "/etc/init.d/tun2socks" ]; then
 cat <<EOL > /etc/init.d/tun2socks
 #!/bin/sh /etc/rc.common
@@ -207,20 +206,19 @@ echo 'script /etc/init.d/tun2socks created'
 chmod +x /etc/init.d/tun2socks
 fi
 
-# Step 12: Create symbolic link
-# Этап 12: Создает символическую ссылку
+# Step 11: Create symbolic link
+# Этап 11: Создает символическую ссылку
 if [ ! -f "/etc/rc.d/S99tun2socks" ]; then
 ln -s /etc/init.d/tun2socks /etc/rc.d/S99tun2socks
 echo '/etc/init.d/tun2socks /etc/rc.d/S99tun2socks symlink created'
 fi
 
-# Step 7: Restart network
-# Этап 7: Перезагружает сеть
-/etc/init.d/network restart
-echo 'Restarting Network....'
-
-# Step 13: Start service
-# Этап 13: Запускает сервис
+# Step 12: Start service
+# Этап 12: Запускает сервис
 /etc/init.d/tun2socks start
 
 echo 'Script finished'
+echo 'Restarting Network....'
+# Step 13: Restart network
+# Этап 13: Перезагружает сеть
+/etc/init.d/network restart
