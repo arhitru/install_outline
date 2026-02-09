@@ -46,7 +46,7 @@ fi
 # Step 1: Check for kmod-tun 
 # Этап 1: Проверяет наличие kmod-tun
 if opkg list-installed | grep -q kmod-tun; then
-    echo "\033[32;1mkmod-tun already installed\033[0m\n"
+    printf "\033[32;1mkmod-tun already installed\033[0m\n"
 else
     echo "Installed kmod-tun"
     opkg install kmod-tun
@@ -55,7 +55,7 @@ fi
 # Step 2: Check for ip-full
 # Этап 2: Проверяет наличие ip-full
 if opkg list-installed | grep -q ip-full; then
-    echo "\033[32;1mip-full already installed\033[0m\n"
+    printf "\033[32;1mip-full already installed\033[0m\n"
 else
     echo "Installed ip-full"
     opkg install ip-full
@@ -63,14 +63,16 @@ fi
 
 # Step 3: Check for tun2socks then download tun2socks binary from GitHub
 # Этап 3: Проверяет наличие tun2socks и скачивает бинарник tun2socks из GitHub
-if [ ! -f "/tmp/tun2socks*" ] || [ ! -f "/usr/bin/tun2socks" ]; then
-ARCH=$(grep "OPENWRT_ARCH" /etc/os-release | awk -F '"' '{print $2}')
-wget https://github.com/1andrevich/outline-install-wrt/releases/latest/download/tun2socks-linux-$ARCH -O /tmp/tun2socks
- # Check wget's exit status
+if [ ! -f "/tmp/tun2socks" ] && [ ! -f "/usr/bin/tun2socks" ]; then
+    ARCH=$(grep "OPENWRT_ARCH" /etc/os-release | awk -F '"' '{print $2}')
+    wget https://github.com/1andrevich/outline-install-wrt/releases/latest/download/tun2socks-linux-$ARCH -O /tmp/tun2socks
+    # Check wget's exit status
     if [ $? -ne 0 ]; then
         echo "Download failed. No file for your Router's architecture"
         exit 1
-   fi
+    fi
+else
+    printf "\033[32;1mtun2socks already installed\033[0m\n"
 fi
 
 # Step 4: Check for tun2socks then move binary to /usr/bin
