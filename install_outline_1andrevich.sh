@@ -2,77 +2,37 @@
 # Outline scripted, xjasonlyu/tun2socks based installer for OpenWRT.
 # https://github.com/1andrevich/outline-install-wrt
 echo 'Starting Outline OpenWRT install script'
-TUNNEL=tun2socks
 opkg update
-
-# System Details
-MODEL=$(cat /tmp/sysinfo/model)
-source /etc/os-release
-printf "\033[34;1mModel: $MODEL\033[0m\n"
-printf "\033[34;1mVersion: $OPENWRT_RELEASE\033[0m\n"
-
-VERSION_ID=$(echo $VERSION | awk -F. '{print $1}')
-
-if [ "$VERSION_ID" -ne 23 ] && [ "$VERSION_ID" -ne 24 ]; then
-    printf "\033[31;1mScript only support OpenWrt 23.05 and 24.10\033[0m\n"
-    echo "For OpenWrt 21.02 and 22.03 you can:"
-    echo "1) Use ansible https://github.com/itdoginfo/domain-routing-openwrt"
-    echo "2) Configure manually. Old manual: https://itdog.info/tochechnaya-marshrutizaciya-na-routere-s-openwrt-wireguard-i-dnscrypt/"
-    exit 1
-fi
-
-# Check for dnsmasqfull
-if opkg list-installed | grep -q dnsmasq-full; then
-    printf "\033[32;1mdnsmasq-full already installed\033[0m\n"
-else
-    printf "\033[32;1mInstalled dnsmasq-full\033[0m\n"
-    cd /tmp/ && opkg download dnsmasq-full
-    opkg remove dnsmasq && opkg install dnsmasq-full --cache /tmp/
-
-    [ -f /etc/config/dhcp-opkg ] && cp /etc/config/dhcp /etc/config/dhcp-old && mv /etc/config/dhcp-opkg /etc/config/dhcp
-fi
-
-# dnsmasqconfdir
-if [ $VERSION_ID -ge 24 ]; then
-    if uci get dhcp.@dnsmasq[0].confdir | grep -q /tmp/dnsmasq.d; then
-        printf "\033[32;1mconfdir already set\033[0m\n"
-    else
-        printf "\033[32;1mSetting confdir\033[0m\n"
-        uci set dhcp.@dnsmasq[0].confdir='/tmp/dnsmasq.d'
-        uci commit dhcp
-    fi
-fi
+TUNNEL=tun2socks
 
 # Step 1: Check for kmod-tun 
 # Этап 1: Проверяет наличие kmod-tun
-if opkg list-installed | grep -q kmod-tun; then
-    printf "\033[32;1mkmod-tun already installed\033[0m\n"
-else
-    echo "Installed kmod-tun"
+opkg list-installed | grep kmod-tun > /dev/null
+if [ $? -ne 0 ]; then
+    echo "kmod-tun is not installed."
     opkg install kmod-tun
+    echo 'kmod-tun installed'
 fi
 
 # Step 2: Check for ip-full
 # Этап 2: Проверяет наличие ip-full
-if opkg list-installed | grep -q ip-full; then
-    printf "\033[32;1mip-full already installed\033[0m\n"
-else
-    echo "Installed ip-full"
+opkg list-installed | grep ip-full > /dev/null
+if [ $? -ne 0 ]; then
+    echo "ip-full is not installed."
     opkg install ip-full
+    echo 'ip-full installed'
 fi
 
 # Step 3: Check for tun2socks then download tun2socks binary from GitHub
 # Этап 3: Проверяет наличие tun2socks и скачивает бинарник tun2socks из GitHub
-if [ ! -f "/tmp/tun2socks" ] && [ ! -f "/usr/bin/tun2socks" ]; then
-    ARCH=$(grep "OPENWRT_ARCH" /etc/os-release | awk -F '"' '{print $2}')
-    wget https://github.com/1andrevich/outline-install-wrt/releases/latest/download/tun2socks-linux-$ARCH -O /tmp/tun2socks
-    # Check wget's exit status
+if [ ! -f "/tmp/tun2socks*" ]; then
+ARCH=$(grep "OPENWRT_ARCH" /etc/os-release | awk -F '"' '{print $2}')
+wget https://github.com/1andrevich/outline-install-wrt/releases/latest/download/tun2socks-linux-$ARCH -O /tmp/tun2socks
+ # Check wget's exit status
     if [ $? -ne 0 ]; then
         echo "Download failed. No file for your Router's architecture"
         exit 1
-    fi
-else
-    printf "\033[32;1mtun2socks already installed\033[0m\n"
+   fi
 fi
 
 # Step 4: Check for tun2socks then move binary to /usr/bin
@@ -85,9 +45,9 @@ fi
 
 # Step 5: Check for existing config in /etc/config/network then add entry
 # Этап 5: Проверяет наличие конфигурации в /etc/config/network и добавляет запись
-if ! grep -q "config interface 'tun2socks'" /etc/config/network; then
+if ! grep -q "config interface 'tunnel'" /etc/config/network; then
 echo "
-config interface 'tun2socks'
+config interface 'tunnel'
     option device 'tun1'
     option proto 'static'
     option ipaddr '172.16.10.1'
@@ -99,11 +59,11 @@ echo 'found entry into /etc/config/network'
 
 # Step 6:Check for existing config /etc/config/firewall then add entry
 # Этап 6: Проверяет наличие конфигурации в /etc/config/firewall и добавляет запись
-if ! grep -q "option name 'tun2socks'" /etc/config/firewall; then 
+if ! grep -q "option name 'proxy'" /etc/config/firewall; then 
 echo "
 config zone
-    option name 'tun2socks'
-    list network 'tun2socks'
+    option name 'proxy'
+    list network 'tunnel'
     option forward 'REJECT'
     option output 'ACCEPT'
     option input 'REJECT'
@@ -113,8 +73,8 @@ config zone
     option family 'ipv4'
 
 config forwarding
-    option name 'tun2socks-lan'
-    option dest 'tun2socks'
+    option name 'lan-proxy'
+    option dest 'proxy'
     option src 'lan'
     option family 'ipv4'
 " >> /etc/config/firewall

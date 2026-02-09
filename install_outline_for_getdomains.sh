@@ -1,0 +1,241 @@
+#!/bin/sh
+# Outline scripted, xjasonlyu/tun2socks based installer for OpenWRT.
+# https://github.com/1andrevich/outline-install-wrt
+echo 'Starting Outline OpenWRT install script'
+TUNNEL=tun2socks
+opkg update
+
+# System Details
+MODEL=$(cat /tmp/sysinfo/model)
+source /etc/os-release
+printf "\033[34;1mModel: $MODEL\033[0m\n"
+printf "\033[34;1mVersion: $OPENWRT_RELEASE\033[0m\n"
+
+VERSION_ID=$(echo $VERSION | awk -F. '{print $1}')
+
+if [ "$VERSION_ID" -ne 23 ] && [ "$VERSION_ID" -ne 24 ]; then
+    printf "\033[31;1mScript only support OpenWrt 23.05 and 24.10\033[0m\n"
+    echo "For OpenWrt 21.02 and 22.03 you can:"
+    echo "1) Use ansible https://github.com/itdoginfo/domain-routing-openwrt"
+    echo "2) Configure manually. Old manual: https://itdog.info/tochechnaya-marshrutizaciya-na-routere-s-openwrt-wireguard-i-dnscrypt/"
+    exit 1
+fi
+
+# Step 1: Check for kmod-tun 
+# Этап 1: Проверяет наличие kmod-tun
+if opkg list-installed | grep -q kmod-tun; then
+    printf "\033[32;1mkmod-tun already installed\033[0m\n"
+else
+    echo "Installed kmod-tun"
+    opkg install kmod-tun
+fi
+
+# Step 2: Check for ip-full
+# Этап 2: Проверяет наличие ip-full
+if opkg list-installed | grep -q ip-full; then
+    printf "\033[32;1mip-full already installed\033[0m\n"
+else
+    echo "Installed ip-full"
+    opkg install ip-full
+fi
+
+# Step 3: Check for tun2socks then download tun2socks binary from GitHub
+# Этап 3: Проверяет наличие tun2socks и скачивает бинарник tun2socks из GitHub
+if [ ! -f "/tmp/tun2socks" ] && [ ! -f "/usr/bin/tun2socks" ]; then
+    ARCH=$(grep "OPENWRT_ARCH" /etc/os-release | awk -F '"' '{print $2}')
+    wget https://github.com/1andrevich/outline-install-wrt/releases/latest/download/tun2socks-linux-$ARCH -O /tmp/tun2socks
+    # Check wget's exit status
+    if [ $? -ne 0 ]; then
+        echo "Download failed. No file for your Router's architecture"
+        exit 1
+    fi
+else
+    printf "\033[32;1mtun2socks already installed\033[0m\n"
+fi
+
+# Step 4: Check for tun2socks then move binary to /usr/bin
+# Этап 4: Проверяет наличие tun2socks и перемещает бинарник в /usr/bin
+if [ ! -f "/usr/bin/tun2socks" ]; then
+mv /tmp/tun2socks /usr/bin/ 
+echo 'moving tun2socks to /usr/bin'
+chmod +x /usr/bin/tun2socks
+fi
+
+# Step 5: Check for existing config in /etc/config/network then add entry
+# Этап 5: Проверяет наличие конфигурации в /etc/config/network и добавляет запись
+if ! grep -q "config interface 'tun2socks'" /etc/config/network; then
+echo "
+config interface 'tun2socks'
+    option device 'tun1'
+    option proto 'static'
+    option ipaddr '172.16.10.1'
+    option netmask '255.255.255.252'
+" >> /etc/config/network
+    echo 'added entry into /etc/config/network'
+fi
+echo 'found entry into /etc/config/network'
+
+# Step 6:Check for existing config /etc/config/firewall then add entry
+# Этап 6: Проверяет наличие конфигурации в /etc/config/firewall и добавляет запись
+if ! grep -q "option name 'tun2socks'" /etc/config/firewall; then 
+echo "
+config zone
+    option name 'tun2socks'
+    list network 'tun2socks'
+    option forward 'REJECT'
+    option output 'ACCEPT'
+    option input 'REJECT'
+    option masq '1'
+    option mtu_fix '1'
+    option device 'tun1'
+    option family 'ipv4'
+
+config forwarding
+    option name 'tun2socks-lan'
+    option dest 'tun2socks'
+    option src 'lan'
+    option family 'ipv4'
+" >> /etc/config/firewall
+    echo 'added entry into /etc/config/firewall'
+fi
+
+echo 'found entry into /etc/config/firewall'
+
+# Step 7: Read user variable for OUTLINE HOST IP
+# Этап 7: Считывает пользовательскую переменную для IP-адреса OUTLINE-сервера
+read -p "Enter Outline Server IP: " OUTLINEIP
+# Read user variable for Outline config
+# Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
+read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
+
+# Step 8. Check for default gateway and save it into DEFGW
+# Этап 8: Проверяет наличие шлюза по умолчанию и сохраняет его в переменную DEFGW
+DEFGW=$(ip route | grep default | awk '{print $3}')
+echo 'checked default gateway'
+
+# Step 9. Check for default interface and save it into DEFIF
+# Этап 9: Проверяет наличие интерфейса по умолчанию и сохраняет его в переменную DEFIF
+DEFIF=$(ip route | grep default | awk '{print $5}')
+echo 'checked default interface'
+
+# Step 10: Create script /etc/init.d/tun2socks
+# Этап 10: Создает скрипт /etc/init.d/tun2socks
+rm /etc/init.d/tun2socks
+if [ ! -f "/etc/init.d/tun2socks" ]; then
+cat <<EOL > /etc/init.d/tun2socks
+#!/bin/sh /etc/rc.common
+USE_PROCD=1
+
+# starts after network starts
+START=99
+# stops before networking stops
+STOP=89
+
+#PROG=/usr/bin/tun2socks
+#IF="tun1"
+#OUTLINE_CONFIG="$OUTLINECONF"
+#LOGLEVEL="warn"
+#BUFFER="64kb"
+
+start_service() {
+    procd_open_instance
+    procd_set_param user root
+    procd_set_param command /usr/bin/tun2socks -device tun1 -tcp-rcvbuf 64kb -tcp-sndbuf 64kb  -proxy "$OUTLINECONF" -loglevel "warn"
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
+    procd_close_instance
+    ip route add "$OUTLINEIP" via "$DEFGW" #Adds route to OUTLINE Server
+	echo 'route to Outline Server added'
+    ip route save default > /tmp/defroute.save  #Saves existing default route
+    echo "tun2socks is working!"
+}
+
+boot() {
+    # This gets run at boot-time.
+    start
+}
+
+shutdown() {
+    # This gets run at shutdown/reboot.
+    stop
+}
+
+stop_service() {
+    service_stop /usr/bin/tun2socks
+    ip route restore default < /tmp/defroute.save #Restores saved default route
+    ip route del "$OUTLINEIP" via "$DEFGW" #Removes route to OUTLINE Server
+    echo "tun2socks has stopped!"
+}
+
+reload_service() {
+    stop
+    sleep 3s
+    echo "tun2socks restarted!"
+    start
+}
+EOL
+DEFAULT_GATEWAY=""
+# Ask user to use Outline as default gateway
+# Задает вопрос пользователю о том, следует ли использовать Outline в качестве шлюза по умолчанию
+while [ "$DEFAULT_GATEWAY" != "y" ] && [ "$DEFAULT_GATEWAY" != "n" ]; do
+    echo "Use Outline as default gateway? [y/n]: "
+    read DEFAULT_GATEWAY
+done
+
+if [ "$DEFAULT_GATEWAY" = "y" ]; then
+		cat <<EOL >> /etc/init.d/tun2socks
+#Replaces default route for Outline
+service_started() {
+    # This function checks if the default gateway is Outline, if no changes it
+     echo 'Replacing default gateway for Outline...'
+     sleep 2s
+     if ip link show tun1 | grep -q "UP" ; then
+         ip route del default #Deletes existing default route
+         ip route add default via 172.16.10.2 dev tun1 #Creates default route through the proxy
+     fi
+}
+start() {
+    start_service
+    service_started
+}
+EOL
+# Checks rc.local and adds script to rc.local to check default route on startup
+# Проверяет файл rc.local и добавляет скрипт в rc.local для проверки маршрута по умолчанию при запуске
+if ! grep -q "sleep 10" /etc/rc.local; then
+sed '/exit 0/i\
+sleep 10\
+#Check if default route is through Outline and change if not\
+if ! ip route | grep -q '\''^default via 172.16.10.2 dev tun1'\''; then\
+    /etc/init.d/tun2socks start\
+fi\
+' /etc/rc.local > /tmp/rc.local.tmp && mv /tmp/rc.local.tmp /etc/rc.local
+		echo "All traffic would be routed through Outline"
+fi
+	else
+		cat <<EOL >> /etc/init.d/tun2socks
+start() {
+    start_service
+}
+EOL
+		echo "No changes to default gateway"
+fi
+
+echo 'script /etc/init.d/tun2socks created'
+
+chmod +x /etc/init.d/tun2socks
+fi
+
+# Step 11: Create symbolic link
+# Этап 11: Создает символическую ссылку
+if [ ! -f "/etc/rc.d/S99tun2socks" ]; then
+ln -s /etc/init.d/tun2socks /etc/rc.d/S99tun2socks
+echo '/etc/init.d/tun2socks /etc/rc.d/S99tun2socks symlink created'
+fi
+
+# Step 12: Start service
+# Этап 12: Запускает сервис
+/etc/init.d/tun2socks start
+printf "\033[32;1mConfigure route for tun2socks\033[0m\n"
+
+echo 'Script finished'
