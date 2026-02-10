@@ -129,10 +129,12 @@ add_zone
 
 # Read user variable for OUTLINE HOST IP
 # Считывает пользовательскую переменную для IP-адреса OUTLINE-сервера
-read -p "Enter Outline Server IP: " OUTLINEIP
+# read -p "Enter Outline Server IP: " OUTLINEIP
 # Read user variable for Outline config
 # Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
 read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
+# Получение ip из ShadowSocks ссылок
+OUTLINEIP=$(echo "$OUTLINECONF" | grep -oE '@([0-9]{1,3}\.){3}[0-9]{1,3}' | cut -d'@' -f2)
 
 # Check for default gateway and save it into DEFGW
 # Проверяет наличие шлюза по умолчанию и сохраняет его в переменную DEFGW
@@ -205,8 +207,7 @@ DEFAULT_GATEWAY=""
 # Ask user to use Outline as default gateway
 # Задает вопрос пользователю о том, следует ли использовать Outline в качестве шлюза по умолчанию
 while [ "$DEFAULT_GATEWAY" != "y" ] && [ "$DEFAULT_GATEWAY" != "n" ]; do
-    echo "Use Outline as default gateway? [y/n]: "
-    read DEFAULT_GATEWAY
+    read -p "Use Outline as default gateway? [y/n]: " DEFAULT_GATEWAY
 done
 
 if [ "$DEFAULT_GATEWAY" = "y" ]; then
