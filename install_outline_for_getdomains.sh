@@ -3,7 +3,6 @@
 # https://github.com/1andrevich/outline-install-wrt
 echo 'Starting Outline OpenWRT install script'
 TUNNEL=tun2socks
-opkg update
 
 remove_forwarding() {
     if [ ! -z "$forward_id" ]; then
