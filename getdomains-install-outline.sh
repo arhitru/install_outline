@@ -8,9 +8,10 @@
 # else
 #     VERSION_ID=0  # Значение по умолчанию для старых версий
 # fi
+VERSION_ID = $1
  echo $VERSION_ID
  exit 1
- 
+
 route_vpn () {
     cat << EOF > /etc/hotplug.d/iface/30-vpnroute
 #!/bin/sh
