@@ -8,11 +8,6 @@
 # else
 #     VERSION_ID=0  # Значение по умолчанию для старых версий
 # fi
- echo $VERSION_ID
-VERSION_ID1 = $1
- echo $VERSION_ID1
- echo "2 = $2"
- exit 1
 
 route_vpn () {
     cat << EOF > /etc/hotplug.d/iface/30-vpnroute
@@ -41,7 +36,7 @@ add_mark() {
 
 add_tunnel() {
     echo "tun2socks"
-    TUNNEL=tun2socks
+    #TUNNEL=tun2socks
     cd /tmp
     wget https://raw.githubusercontent.com/arhitru/install_outline/main/install_outline_for_getdomains.sh -O install_outline_for_getdomains.sh
     chmod +x install_outline_for_getdomains.sh
@@ -154,39 +149,10 @@ add_set() {
 }
 
 add_dns_resolver() {
-    echo "Configure DNSCrypt2 or Stubby? It does matter if your ISP is spoofing DNS requests"
     DISK=$(df -m / | awk 'NR==2{ print $2 }')
     if [[ "$DISK" -lt 32 ]]; then 
         printf "\033[31;1mYour router a disk have less than 32MB. It is not recommended to install DNSCrypt, it takes 10MB\033[0m\n"
     fi
-    echo "Select:"
-    echo "1) No [Default]"
-    echo "2) DNSCrypt2 (10.7M)"
-    echo "3) Stubby (36K)"
-
-    while true; do
-    read -r -p '' DNS_RESOLVER
-        case $DNS_RESOLVER in 
-
-        1) 
-            echo "Skiped"
-            break
-            ;;
-
-        2)
-            DNS_RESOLVER=DNSCRYPT
-            break
-            ;;
-
-        3) 
-            DNS_RESOLVER=STUBBY
-            break
-            ;;
-
-        *)
-            echo "Choose from the following options"
-            ;;
-        esac
     done
 
     if [ "$DNS_RESOLVER" == 'DNSCRYPT' ]; then
@@ -263,43 +229,7 @@ add_packages() {
 }
 
 add_getdomains() {
-    echo "Choose you country"
-    echo "Select:"
-    echo "1) Russia inside. You are inside Russia"
-    echo "2) Russia outside. You are outside of Russia, but you need access to Russian resources"
-    echo "3) Ukraine. uablacklist.net list"
-    echo "4) Skip script creation"
 
-    while true; do
-    read -r -p '' COUNTRY
-        case $COUNTRY in 
-
-        1) 
-            COUNTRY=russia_inside
-            break
-            ;;
-
-        2)
-            COUNTRY=russia_outside
-            break
-            ;;
-
-        3) 
-            COUNTRY=ukraine
-            break
-            ;;
-
-        4) 
-            echo "Skiped"
-            COUNTRY=0
-            break
-            ;;
-
-        *)
-            echo "Choose from the following options"
-            ;;
-        esac
-    done
 
     if [ "$COUNTRY" == 'russia_inside' ]; then
         EOF_DOMAINS=DOMAINS=https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-dnsmasq-nfset.lst
