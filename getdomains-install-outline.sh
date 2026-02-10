@@ -153,7 +153,7 @@ add_dns_resolver() {
     if [[ "$DISK" -lt 32 ]]; then 
         printf "\033[31;1mYour router a disk have less than 32MB. It is not recommended to install DNSCrypt, it takes 10MB\033[0m\n"
     fi
-    done
+
 
     if [ "$DNS_RESOLVER" == 'DNSCRYPT' ]; then
         if opkg list-installed | grep -q dnscrypt-proxy2; then
