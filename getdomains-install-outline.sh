@@ -8,6 +8,7 @@
 # else
 #     VERSION_ID=0  # Значение по умолчанию для старых версий
 # fi
+ echo $VERSION_ID
 VERSION_ID = $1
  echo $VERSION_ID
  exit 1
