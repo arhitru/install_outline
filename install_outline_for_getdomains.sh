@@ -100,17 +100,7 @@ fi
 
 # Check for existing config in /etc/config/network then add entry
 # Проверяет наличие конфигурации в /etc/config/network и добавляет запись
-# if ! grep -q "config interface '$TUNNEL'" /etc/config/network; then
-# echo "
-# config interface '$TUNNEL'
-#     option device 'tun1'
-#     option proto 'static'
-#     option ipaddr '172.16.10.1'
-#     option netmask '255.255.255.252'
-# " >> /etc/config/network
-#     echo 'added entry into /etc/config/network'
-# fi
-if ! uci show network | grep -q "config interface '$TUNNEL'"; then
+if ! uci get network.$TUNNEL >/dev/null 2>&1; then
     printf "\033[32;1mConfigure interface\033[0m\n"
     uci add network interface
     uci set network.@interface[-1].name="$TUNNEL"
@@ -118,10 +108,10 @@ if ! uci show network | grep -q "config interface '$TUNNEL'"; then
     uci set network.@interface[-1].proto='static'
     uci set network.@interface[-1].ipaddr='172.16.10.1'
     uci set network.@interface[-1].netmask='255.255.255.252'
-    uci commit
+    uci commit network
+else
+    printf "\033[33mInterface '$TUNNEL' already exists\033[0m\n"
 fi
-
-echo 'found entry into /etc/config/network'
 
 # Check for existing config /etc/config/firewall then add entry
 # Проверяет наличие конфигурации в /etc/config/firewall и добавляет запись
