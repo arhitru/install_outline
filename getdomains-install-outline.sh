@@ -31,7 +31,7 @@ add_tunnel() {
     echo "tun2socks"
     TUNNEL=tun2socks
     cd /tmp
-    wget https://raw.githubusercontent.com/arhitru/install_outline/main/install_outline_for_getdomains.sh -O install_outline.sh
+    wget https://raw.githubusercontent.com/arhitru/install_outline/main/install_outline_for_getdomains.sh -O install_outline_for_getdomains.sh
     chmod +x install_outline_for_getdomains.sh
     ./install_outline_for_getdomains.sh
     route_vpn
