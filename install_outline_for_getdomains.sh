@@ -110,16 +110,13 @@ if ! uci get network.$TUNNEL >/dev/null 2>&1; then
     uci set network.@interface[-1].netmask='255.255.255.252'
     uci commit network
 else
-    printf "\033[33mInterface '$TUNNEL' already exists\033[0m\n"
+    printf "\033[32;1mInterface '$TUNNEL' already exists\033[0m\n"
 fi
 
 # Check for existing config /etc/config/firewall then add entry
 # Проверяет наличие конфигурации в /etc/config/firewall и добавляет запись
 add_zone
 
-# Read user variable for OUTLINE HOST IP
-# Считывает пользовательскую переменную для IP-адреса OUTLINE-сервера
-# read -p "Enter Outline Server IP: " OUTLINEIP
 # Read user variable for Outline config
 # Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
 # read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
@@ -193,12 +190,12 @@ reload_service() {
     start
 }
 EOL
-DEFAULT_GATEWAY=""
+DEFAULT_GATEWAY=$OUTLINE_DEFAULT_GATEWAY
 # Ask user to use Outline as default gateway
 # Задает вопрос пользователю о том, следует ли использовать Outline в качестве шлюза по умолчанию
-while [ "$DEFAULT_GATEWAY" != "y" ] && [ "$DEFAULT_GATEWAY" != "n" ]; do
-    read -p "Use Outline as default gateway? [y/n]: " DEFAULT_GATEWAY
-done
+# while [ "$DEFAULT_GATEWAY" != "y" ] && [ "$DEFAULT_GATEWAY" != "n" ]; do
+#     read -p "Use Outline as default gateway? [y/n]: " DEFAULT_GATEWAY
+# done
 
 if [ "$DEFAULT_GATEWAY" = "y" ]; then
 		cat <<EOL >> /etc/init.d/tun2socks
@@ -255,5 +252,3 @@ fi
 # Запускает сервис
 /etc/init.d/tun2socks start
 printf "\033[32;1mConfigure route for tun2socks\033[0m\n"
-
-echo 'Script finished'
