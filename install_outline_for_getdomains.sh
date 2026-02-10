@@ -2,7 +2,7 @@
 # Outline scripted, xjasonlyu/tun2socks based installer for OpenWRT.
 # https://github.com/1andrevich/outline-install-wrt
 echo 'Starting Outline OpenWRT install script'
-TUNNEL=tun2socks
+#TUNNEL=tun2socks
 
 remove_forwarding() {
     if [ ! -z "$forward_id" ]; then
@@ -122,7 +122,7 @@ add_zone
 # read -p "Enter Outline Server IP: " OUTLINEIP
 # Read user variable for Outline config
 # Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
-read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
+# read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
 # Получение ip из ShadowSocks ссылок
 OUTLINEIP=$(echo "$OUTLINECONF" | grep -oE '@([0-9]{1,3}\.){3}[0-9]{1,3}' | cut -d'@' -f2)
 
