@@ -344,6 +344,7 @@ EOF
     fi
 }
 
+VERSION_ID=$(echo $VERSION | awk -F. '{print $1}')
 
 add_packages
 
