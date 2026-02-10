@@ -5,24 +5,62 @@ echo 'Starting Outline OpenWRT install script'
 TUNNEL=tun2socks
 opkg update
 
-# System Details
-MODEL=$(cat /tmp/sysinfo/model)
-source /etc/os-release
-printf "\033[34;1mModel: $MODEL\033[0m\n"
-printf "\033[34;1mVersion: $OPENWRT_RELEASE\033[0m\n"
+remove_forwarding() {
+    if [ ! -z "$forward_id" ]; then
+        while uci -q delete firewall.@forwarding[$forward_id]; do :; done
+    fi
+}
 
-VERSION_ID=$(echo $VERSION | awk -F. '{print $1}')
+# Check for existing config /etc/config/firewall then add entry
+# Проверяет наличие конфигурации в /etc/config/firewall и добавляет запись
+add_zone() {
+    if  uci show firewall | grep -q "@zone.*name='$TUNNEL'"; then
+        printf "\033[32;1mZone already exist\033[0m\n"
+    else
+        printf "\033[32;1mCreate zone\033[0m\n"
 
-if [ "$VERSION_ID" -ne 23 ] && [ "$VERSION_ID" -ne 24 ]; then
-    printf "\033[31;1mScript only support OpenWrt 23.05 and 24.10\033[0m\n"
-    echo "For OpenWrt 21.02 and 22.03 you can:"
-    echo "1) Use ansible https://github.com/itdoginfo/domain-routing-openwrt"
-    echo "2) Configure manually. Old manual: https://itdog.info/tochechnaya-marshrutizaciya-na-routere-s-openwrt-wireguard-i-dnscrypt/"
-    exit 1
-fi
+        # Delete exists zone
+        zone_tun_id=$(uci show firewall | grep -E '@zone.*tun0' | awk -F '[][{}]' '{print $2}' | head -n 1)
+        if [ "$zone_tun_id" == 0 ] || [ "$zone_tun_id" == 1 ]; then
+            printf "\033[32;1mtun0 zone has an identifier of 0 or 1. That's not ok. Fix your firewall. lan and wan zones should have identifiers 0 and 1. \033[0m\n"
+            exit 1
+        fi
+        if [ ! -z "$zone_tun_id" ]; then
+            while uci -q delete firewall.@zone[$zone_tun_id]; do :; done
+        fi
 
-# Step 1: Check for kmod-tun 
-# Этап 1: Проверяет наличие kmod-tun
+        uci add firewall zone
+        uci set firewall.@zone[-1].name="$TUNNEL"
+        uci set firewall.@zone[-1].device='tun1'
+        uci set firewall.@zone[-1].forward='REJECT'
+        uci set firewall.@zone[-1].output='ACCEPT'
+        uci set firewall.@zone[-1].input='REJECT'
+        uci set firewall.@zone[-1].masq='1'
+        uci set firewall.@zone[-1].mtu_fix='1'
+        uci set firewall.@zone[-1].family='ipv4'
+        uci commit firewall
+    fi
+    
+    if  uci show firewall | grep -q "@forwarding.*name='$TUNNEL-lan'"; then
+        printf "\033[32;1mForwarding already configured\033[0m\n"
+    else
+        printf "\033[32;1mConfigured forwarding\033[0m\n"
+        # Delete exists forwarding
+        forward_id=$(uci show firewall | grep -E "@forwarding.*dest='tun2socks'" | awk -F '[][{}]' '{print $2}' | head -n 1)
+        remove_forwarding
+
+        uci add firewall forwarding
+        uci set firewall.@forwarding[-1]=forwarding
+        uci set firewall.@forwarding[-1].name="$TUNNEL-lan"
+        uci set firewall.@forwarding[-1].dest="$TUNNEL"
+        uci set firewall.@forwarding[-1].src='lan'
+        uci set firewall.@forwarding[-1].family='ipv4'
+        uci commit firewall
+    fi
+}
+
+# Check for kmod-tun 
+# Проверяет наличие kmod-tun
 if opkg list-installed | grep -q kmod-tun; then
     printf "\033[32;1mkmod-tun already installed\033[0m\n"
 else
@@ -30,8 +68,8 @@ else
     opkg install kmod-tun
 fi
 
-# Step 2: Check for ip-full
-# Этап 2: Проверяет наличие ip-full
+# Check for ip-full
+# Проверяет наличие ip-full
 if opkg list-installed | grep -q ip-full; then
     printf "\033[32;1mip-full already installed\033[0m\n"
 else
@@ -39,8 +77,8 @@ else
     opkg install ip-full
 fi
 
-# Step 3: Check for tun2socks then download tun2socks binary from GitHub
-# Этап 3: Проверяет наличие tun2socks и скачивает бинарник tun2socks из GitHub
+# Check for tun2socks then download tun2socks binary from GitHub
+# Проверяет наличие tun2socks и скачивает бинарник tun2socks из GitHub
 if [ ! -f "/tmp/tun2socks" ] && [ ! -f "/usr/bin/tun2socks" ]; then
     ARCH=$(grep "OPENWRT_ARCH" /etc/os-release | awk -F '"' '{print $2}')
     wget https://github.com/1andrevich/outline-install-wrt/releases/latest/download/tun2socks-linux-$ARCH -O /tmp/tun2socks
@@ -53,73 +91,62 @@ else
     printf "\033[32;1mtun2socks already installed\033[0m\n"
 fi
 
-# Step 4: Check for tun2socks then move binary to /usr/bin
-# Этап 4: Проверяет наличие tun2socks и перемещает бинарник в /usr/bin
+# Check for tun2socks then move binary to /usr/bin
+# Проверяет наличие tun2socks и перемещает бинарник в /usr/bin
 if [ ! -f "/usr/bin/tun2socks" ]; then
 mv /tmp/tun2socks /usr/bin/ 
 echo 'moving tun2socks to /usr/bin'
 chmod +x /usr/bin/tun2socks
 fi
 
-# Step 5: Check for existing config in /etc/config/network then add entry
-# Этап 5: Проверяет наличие конфигурации в /etc/config/network и добавляет запись
-if ! grep -q "config interface 'tun2socks'" /etc/config/network; then
-echo "
-config interface 'tun2socks'
-    option device 'tun1'
-    option proto 'static'
-    option ipaddr '172.16.10.1'
-    option netmask '255.255.255.252'
-" >> /etc/config/network
-    echo 'added entry into /etc/config/network'
+# Check for existing config in /etc/config/network then add entry
+# Проверяет наличие конфигурации в /etc/config/network и добавляет запись
+# if ! grep -q "config interface '$TUNNEL'" /etc/config/network; then
+# echo "
+# config interface '$TUNNEL'
+#     option device 'tun1'
+#     option proto 'static'
+#     option ipaddr '172.16.10.1'
+#     option netmask '255.255.255.252'
+# " >> /etc/config/network
+#     echo 'added entry into /etc/config/network'
+# fi
+if ! uci show network | grep -q "config interface '$TUNNEL'"; then
+    printf "\033[32;1mConfigure interface\033[0m\n"
+    uci add network interface
+    uci set network.@interface[-1].name="$TUNNEL"
+    uci set network.@interface[-1].device='tun1'
+    uci set network.@interface[-1].proto='static'
+    uci set network.@interface[-1].ipaddr='172.16.10.1'
+    uci set network.@interface[-1].netmask='255.255.255.252'
+    uci commit
 fi
+
 echo 'found entry into /etc/config/network'
 
-# Step 6:Check for existing config /etc/config/firewall then add entry
-# Этап 6: Проверяет наличие конфигурации в /etc/config/firewall и добавляет запись
-if ! grep -q "option name 'tun2socks'" /etc/config/firewall; then 
-echo "
-config zone
-    option name 'tun2socks'
-    list network 'tun2socks'
-    option forward 'REJECT'
-    option output 'ACCEPT'
-    option input 'REJECT'
-    option masq '1'
-    option mtu_fix '1'
-    option device 'tun1'
-    option family 'ipv4'
+# Check for existing config /etc/config/firewall then add entry
+# Проверяет наличие конфигурации в /etc/config/firewall и добавляет запись
+add_zone
 
-config forwarding
-    option name 'tun2socks-lan'
-    option dest 'tun2socks'
-    option src 'lan'
-    option family 'ipv4'
-" >> /etc/config/firewall
-    echo 'added entry into /etc/config/firewall'
-fi
-
-echo 'found entry into /etc/config/firewall'
-
-# Step 7: Read user variable for OUTLINE HOST IP
-# Этап 7: Считывает пользовательскую переменную для IP-адреса OUTLINE-сервера
+# Read user variable for OUTLINE HOST IP
+# Считывает пользовательскую переменную для IP-адреса OUTLINE-сервера
 read -p "Enter Outline Server IP: " OUTLINEIP
 # Read user variable for Outline config
 # Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
 read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
 
-# Step 8. Check for default gateway and save it into DEFGW
-# Этап 8: Проверяет наличие шлюза по умолчанию и сохраняет его в переменную DEFGW
+# Check for default gateway and save it into DEFGW
+# Проверяет наличие шлюза по умолчанию и сохраняет его в переменную DEFGW
 DEFGW=$(ip route | grep default | awk '{print $3}')
 echo 'checked default gateway'
 
-# Step 9. Check for default interface and save it into DEFIF
-# Этап 9: Проверяет наличие интерфейса по умолчанию и сохраняет его в переменную DEFIF
+# Check for default interface and save it into DEFIF
+# Проверяет наличие интерфейса по умолчанию и сохраняет его в переменную DEFIF
 DEFIF=$(ip route | grep default | awk '{print $5}')
 echo 'checked default interface'
 
-# Step 10: Create script /etc/init.d/tun2socks
-# Этап 10: Создает скрипт /etc/init.d/tun2socks
+# Create script /etc/init.d/tun2socks
+# Создает скрипт /etc/init.d/tun2socks
 rm /etc/init.d/tun2socks
 if [ ! -f "/etc/init.d/tun2socks" ]; then
 cat <<EOL > /etc/init.d/tun2socks
@@ -200,6 +227,7 @@ start() {
     service_started
 }
 EOL
+
 # Checks rc.local and adds script to rc.local to check default route on startup
 # Проверяет файл rc.local и добавляет скрипт в rc.local для проверки маршрута по умолчанию при запуске
 if ! grep -q "sleep 10" /etc/rc.local; then
@@ -226,15 +254,15 @@ echo 'script /etc/init.d/tun2socks created'
 chmod +x /etc/init.d/tun2socks
 fi
 
-# Step 11: Create symbolic link
-# Этап 11: Создает символическую ссылку
+# Create symbolic link
+#  Создает символическую ссылку
 if [ ! -f "/etc/rc.d/S99tun2socks" ]; then
 ln -s /etc/init.d/tun2socks /etc/rc.d/S99tun2socks
 echo '/etc/init.d/tun2socks /etc/rc.d/S99tun2socks symlink created'
 fi
 
-# Step 12: Start service
-# Этап 12: Запускает сервис
+# Start service
+# Запускает сервис
 /etc/init.d/tun2socks start
 printf "\033[32;1mConfigure route for tun2socks\033[0m\n"
 
