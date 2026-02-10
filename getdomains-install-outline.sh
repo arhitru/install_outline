@@ -2,13 +2,6 @@
 
 #set -x
 
-# if [ -f /etc/os-release ]; then
-#     VERSION=$(grep 'VERSION=' /etc/os-release | cut -d'"' -f2)
-#     VERSION_ID=$(echo $VERSION | awk -F. '{print $1}')
-# else
-#     VERSION_ID=0  # Значение по умолчанию для старых версий
-# fi
-
 route_vpn () {
     cat << EOF > /etc/hotplug.d/iface/30-vpnroute
 #!/bin/sh
