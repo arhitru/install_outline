@@ -2,6 +2,13 @@
 
 #set -x
 
+if [ -f /etc/os-release ]; then
+    VERSION=$(grep 'VERSION=' /etc/os-release | cut -d'"' -f2)
+    VERSION_ID=$(echo $VERSION | awk -F. '{print $1}')
+else
+    VERSION_ID=0  # Значение по умолчанию для старых версий
+fi
+
 route_vpn () {
     cat << EOF > /etc/hotplug.d/iface/30-vpnroute
 #!/bin/sh
@@ -50,7 +57,7 @@ dnsmasqfull() {
 }
 
 dnsmasqconfdir() {
-    if [ $VERSION_ID -ge 24 ]; then
+    if [ -n "$VERSION_ID" ] && [ "$VERSION_ID" -ge 24 ] 2>/dev/null; then
         if uci get dhcp.@dnsmasq[0].confdir | grep -q /tmp/dnsmasq.d; then
             printf "\033[32;1mconfdir already set\033[0m\n"
         else
@@ -343,8 +350,6 @@ EOF
         /etc/init.d/getdomains start
     fi
 }
-
-VERSION_ID=$(echo $VERSION | awk -F. '{print $1}')
 
 add_packages
 
