@@ -29,6 +29,9 @@ fi
 if [ ! -f "/root/install_outline_settings.sh" ]; then
     cd /root && wget https://raw.githubusercontent.com/arhitru/fuctions_bash/refs/heads/main/install_outline_settings.sh >> $LOG_FILE 2>&1 && chmod +x /root/install_outline_settings.sh
 fi
+if [ ! -f "/root/install_outline_settings.sh" ]; then
+    cd /root && wget https://raw.githubusercontent.com/arhitru/install_outline/main/install_outline_for_getdomains.sh -O /root/install_outline.sh >> $LOG_FILE 2>&1 && chmod +x /root/install_outline_for_getdomains.sh
+fi
 
 . /root/logging_functions.sh
 . /root/install_outline_settings.sh
