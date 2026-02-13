@@ -16,11 +16,10 @@ config_settings() {
     fi
 
     . /root/logging_functions.sh
-    . $CONFIG_FILE
 }
 
 install_outline_settings() {
-    if [! -f "$CONFIG_FILE" ]; then
+    if [ ! -f "$CONFIG_FILE" ]; then
         export TUNNEL="tun2socks"
         # Проверка версии OpenWrt
         if [ -f /etc/os-release ]; then
@@ -137,9 +136,9 @@ EOF
 
 # Проверка: файл запущен напрямую или импортирован
 # if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # Прямой запуск - выполняем тесты или демо
-    config_settings
-    install_outline_settings
+    # # Прямой запуск - выполняем тесты или демо
+    # config_settings
+    # install_outline_settings
 # else
 #     # Импортирован через source - только определяем функции
 #     return 0 2>/dev/null
