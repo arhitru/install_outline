@@ -3,7 +3,35 @@
 # https://github.com/1andrevich/outline-install-wrt
 # https://raw.githubusercontent.com/itdoginfo/ansible-openwrt-hirkn/master/getdomains-install.sh
 
-echo 'Starting Outline OpenWRT install script'
+# ============================================================================
+# Конфигурация
+# ============================================================================
+SCRIPT_NAME=$(basename "$0")
+SCRIPT_DIR=$(dirname "$0")
+LOG_DIR="/root"
+LOG_FILE="${LOG_DIR}/install_outline_vpn.log"
+PID_FILE="/var/run/${SCRIPT_NAME}.pid"
+LOCK_FILE="/var/lock/${SCRIPT_NAME}.lock"
+CONFIG_FILE="/root/outline.conf"
+RETRY_COUNT=5
+
+# Режим выполнения (auto/interactive)
+if [ "$1" = "--auto" ] || [ "$1" = "-a" ]; then
+    AUTO_MODE=1
+    export AUTO_MODE
+else
+    AUTO_MODE=0
+    export AUTO_MODE
+fi
+
+if [ ! -f "/root/logging_functions.sh" ]; then
+    cd /root && wget https://raw.githubusercontent.com/arhitru/fuctions_bash/refs/heads/main/logging_functions.sh >> $LOG_FILE 2>&1 && chmod +x /root/logging_functions.sh
+fi
+
+. /root/logging_functions.sh
+. $CONFIG_FILE
+
+log_info 'Starting Outline OpenWRT install script'
 #TUNNEL=tun2socks
 
 remove_forwarding() {
@@ -16,14 +44,14 @@ remove_forwarding() {
 # Проверяет наличие конфигурации в /etc/config/firewall и добавляет запись
 add_zone() {
     if  uci show firewall | grep -q "@zone.*name='$TUNNEL'"; then
-        printf "\033[32;1mZone already exist\033[0m\n"
+        log_info "Zone already exist"
     else
-        printf "\033[32;1mCreate zone\033[0m\n"
+        log_info "Create zone"
 
         # Delete exists zone
         zone_tun_id=$(uci show firewall | grep -E '@zone.*tun0' | awk -F '[][{}]' '{print $2}' | head -n 1)
         if [ "$zone_tun_id" == 0 ] || [ "$zone_tun_id" == 1 ]; then
-            printf "\033[32;1mtun0 zone has an identifier of 0 or 1. That's not ok. Fix your firewall. lan and wan zones should have identifiers 0 and 1. \033[0m\n"
+            log_warn "tun0 zone has an identifier of 0 or 1. That's not ok. Fix your firewall. lan and wan zones should have identifiers 0 and 1."
             exit 1
         fi
         if [ ! -z "$zone_tun_id" ]; then
@@ -43,9 +71,9 @@ add_zone() {
     fi
     
     if  uci show firewall | grep -q "@forwarding.*name='$TUNNEL-lan'"; then
-        printf "\033[32;1mForwarding already configured\033[0m\n"
+        log_info "Forwarding already configured"
     else
-        printf "\033[32;1mConfigured forwarding\033[0m\n"
+        log_info "Configured forwarding"
         # Delete exists forwarding
         forward_id=$(uci show firewall | grep -E "@forwarding.*dest='tun2socks'" | awk -F '[][{}]' '{print $2}' | head -n 1)
         remove_forwarding
@@ -63,9 +91,9 @@ add_zone() {
 # Check for kmod-tun 
 # Проверяет наличие kmod-tun
 if opkg list-installed | grep -q kmod-tun; then
-    printf "\033[32;1mkmod-tun already installed\033[0m\n"
+    log_info "kmod-tun already installed"
 else
-    echo "Installed kmod-tun"
+    log_info "Installed kmod-tun"
     opkg install kmod-tun
 fi
 
