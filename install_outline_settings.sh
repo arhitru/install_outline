@@ -142,5 +142,5 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     install_outline_settings
 else
     # Импортирован через source - только определяем функции
-    return 0 2>/dev/null || true
+    return 0 2>/dev/null
 fi
