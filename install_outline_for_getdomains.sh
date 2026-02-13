@@ -1,6 +1,8 @@
 #!/bin/sh
 # Outline scripted, xjasonlyu/tun2socks based installer for OpenWRT.
 # https://github.com/1andrevich/outline-install-wrt
+# https://raw.githubusercontent.com/itdoginfo/ansible-openwrt-hirkn/master/getdomains-install.sh
+
 echo 'Starting Outline OpenWRT install script'
 #TUNNEL=tun2socks
 
@@ -93,9 +95,9 @@ fi
 # Check for tun2socks then move binary to /usr/bin
 # Проверяет наличие tun2socks и перемещает бинарник в /usr/bin
 if [ ! -f "/usr/bin/tun2socks" ]; then
-mv /tmp/tun2socks /usr/bin/ 
-echo 'moving tun2socks to /usr/bin'
-chmod +x /usr/bin/tun2socks
+    mv /tmp/tun2socks /usr/bin/ 
+    echo 'moving tun2socks to /usr/bin'
+    chmod +x /usr/bin/tun2socks
 fi
 
 # Check for existing config in /etc/config/network then add entry
