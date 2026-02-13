@@ -28,16 +28,6 @@ add_mark() {
     fi
 }
 
-add_tunnel() {
-    echo "tun2socks"
-    #TUNNEL=tun2socks
-    cd /tmp
-    wget https://raw.githubusercontent.com/arhitru/install_outline/main/install_outline_for_getdomains.sh -O install_outline_for_getdomains.sh
-    chmod +x install_outline_for_getdomains.sh
-    ./install_outline_for_getdomains.sh
-    route_vpn
-}
-
 dnsmasqfull() {
     if opkg list-installed | grep -q dnsmasq-full; then
         printf "\033[32;1mdnsmasq-full already installed\033[0m\n"
@@ -223,8 +213,6 @@ add_packages() {
 }
 
 add_getdomains() {
-
-
     if [ "$COUNTRY" == 'russia_inside' ]; then
         EOF_DOMAINS=DOMAINS=https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-dnsmasq-nfset.lst
     elif [ "$COUNTRY" == 'russia_outside' ]; then
@@ -280,22 +268,29 @@ EOF
     fi
 }
 
-add_packages
+# Проверка: файл запущен напрямую или импортирован
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Прямой запуск - выполняем тесты или демо
+    add_packages
 
-add_tunnel
+    add_tunnel
 
-add_mark
+    add_mark
 
-add_zone
+    add_zone
 
-add_set
+    add_set
 
-dnsmasqfull
+    dnsmasqfull
 
-dnsmasqconfdir
+    dnsmasqconfdir
 
-add_dns_resolver
+    add_dns_resolver
 
-add_getdomains
+    add_getdomains
 
-printf "\033[32;1mDone\033[0m\n"
+    printf "\033[32;1mDone\033[0m\n"
+else
+    # Импортирован через source - только определяем функции
+    return 0 2>/dev/null || true
+fi
