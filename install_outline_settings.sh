@@ -136,11 +136,11 @@ EOF
 }
 
 # Проверка: файл запущен напрямую или импортирован
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+# if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # Прямой запуск - выполняем тесты или демо
     config_settings
     install_outline_settings
-else
-    # Импортирован через source - только определяем функции
-    return 0 2>/dev/null
-fi
+# else
+#     # Импортирован через source - только определяем функции
+#     return 0 2>/dev/null
+# fi
