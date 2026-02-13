@@ -501,7 +501,7 @@ EOL
     . /root/logging_functions.sh
     . /root/install_outline_settings.sh
     install_outline_settings
-    . $CONFIG_FILE
+    #. $CONFIG_FILE
 
     log_info 'Starting Outline OpenWRT install script'
     #TUNNEL=tun2socks
