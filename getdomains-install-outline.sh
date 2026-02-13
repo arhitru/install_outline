@@ -1,6 +1,7 @@
 #!/bin/sh
-
 #set -x
+# https://raw.githubusercontent.com/itdoginfo/ansible-openwrt-hirkn/master/getdomains-install.sh
+# https://github.com/1andrevich/outline-install-wrt
 
 route_vpn () {
     cat << EOF > /etc/hotplug.d/iface/30-vpnroute
