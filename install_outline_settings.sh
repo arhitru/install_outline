@@ -8,6 +8,7 @@ install_outline_settings() {
     SCRIPT_NAME=$(basename "$0")
     SCRIPT_DIR=$(dirname "$0")
     LOG_DIR="/root"
+    LOG_FILE="${LOG_DIR}/install_outline_vpn.log"
     CONFIG_FILE="/root/outline.conf"
 
     if [ ! -f "/root/logging_functions.sh" ]; then
