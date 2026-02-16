@@ -95,6 +95,7 @@ install_outline_settings() {
         done
         # Ask user to use Outline as default gateway
         # Задает вопрос пользователю о том, следует ли использовать Outline в качестве шлюза по умолчанию
+        read -p "Use Outline as default gateway? [y/n]: " DEFAULT_GATEWAY
         if [ "$DEFAULT_GATEWAY" = "y" ] || [ "$DEFAULT_GATEWAY" = "Y" ]; then
             export OUTLINE_DEFAULT_GATEWAY=$DEFAULT_GATEWAY
         fi
