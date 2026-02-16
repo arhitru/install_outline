@@ -98,7 +98,7 @@ install_pkg(){
     # Check for ip-full
     # Проверяет наличие ip-full
     if opkg list-installed | grep -q ip-full; then
-        printf "\033[32;1mip-full already installed\033[0m\n"
+        log_info "ip-full already installed"
     else
         echo "Installed ip-full"
         opkg install ip-full
@@ -107,9 +107,9 @@ install_pkg(){
 
 dnsmasqfull() {
     if opkg list-installed | grep -q dnsmasq-full; then
-        printf "\033[32;1mdnsmasq-full already installed\033[0m\n"
+        log_info "dnsmasq-full already installed"
     else
-        printf "\033[32;1mInstalled dnsmasq-full\033[0m\n"
+        log_info "Installed dnsmasq-full"
         cd /tmp/ && opkg download dnsmasq-full
         opkg remove dnsmasq && opkg install dnsmasq-full --cache /tmp/
 
@@ -120,9 +120,9 @@ dnsmasqfull() {
 dnsmasqconfdir() {
     if [ -n "$VERSION_ID" ] && [ "$VERSION_ID" -ge 24 ] 2>/dev/null; then
         if uci get dhcp.@dnsmasq[0].confdir | grep -q /tmp/dnsmasq.d; then
-            printf "\033[32;1mconfdir already set\033[0m\n"
+            log_info "confdir already set"
         else
-            printf "\033[32;1mSetting confdir\033[0m\n"
+            log_info "Setting confdir"
             uci set dhcp.@dnsmasq[0].confdir='/tmp/dnsmasq.d'
             uci commit dhcp
         fi
@@ -131,18 +131,18 @@ dnsmasqconfdir() {
 
 add_set() {
     if uci show firewall | grep -q "@ipset.*name='vpn_domains'"; then
-        printf "\033[32;1mSet already exist\033[0m\n"
+        log_info "Set already exist"
     else
-        printf "\033[32;1mCreate set\033[0m\n"
+        log_info "Create set"
         uci add firewall ipset
         uci set firewall.@ipset[-1].name='vpn_domains'
         uci set firewall.@ipset[-1].match='dst_net'
         uci commit
     fi
     if uci show firewall | grep -q "@rule.*name='mark_domains'"; then
-        printf "\033[32;1mRule for set already exist\033[0m\n"
+        log_info "Rule for set already exist"
     else
-        printf "\033[32;1mCreate rule set\033[0m\n"
+        log_info "Create rule set"
         uci add firewall rule
         uci set firewall.@rule[-1]=rule
         uci set firewall.@rule[-1].name='mark_domains'
@@ -160,23 +160,23 @@ add_set() {
 add_dns_resolver() {
     DISK=$(df -m / | awk 'NR==2{ print $2 }')
     if [[ "$DISK" -lt 32 ]]; then 
-        printf "\033[31;1mYour router a disk have less than 32MB. It is not recommended to install DNSCrypt, it takes 10MB\033[0m\n"
+        log_info "\033[31;1mYour router a disk have less than 32MB. It is not recommended to install DNSCrypt, it takes 10MB"
     fi
 
 
     if [ "$DNS_RESOLVER" == 'DNSCRYPT' ]; then
         if opkg list-installed | grep -q dnscrypt-proxy2; then
-            printf "\033[32;1mDNSCrypt2 already installed\033[0m\n"
+            log_info "DNSCrypt2 already installed"
         else
-            printf "\033[32;1mInstalled dnscrypt-proxy2\033[0m\n"
+            log_info "Installed dnscrypt-proxy2"
             opkg install dnscrypt-proxy2
             if grep -q "# server_names" /etc/dnscrypt-proxy2/dnscrypt-proxy.toml; then
                 sed -i "s/^# server_names =.*/server_names = [\'google\', \'cloudflare\', \'scaleway-fr\', \'yandex\']/g" /etc/dnscrypt-proxy2/dnscrypt-proxy.toml
             fi
 
-            printf "\033[32;1mDNSCrypt restart\033[0m\n"
+            log_info "DNSCrypt restart"
             service dnscrypt-proxy restart
-            printf "\033[32;1mDNSCrypt needs to load the relays list. Please wait\033[0m\n"
+            log_info "DNSCrypt needs to load the relays list. Please wait"
             sleep 30
 
             if [ -f /etc/dnscrypt-proxy2/relays.md ]; then
@@ -186,33 +186,33 @@ add_dns_resolver() {
                 uci add_list dhcp.@dnsmasq[0].server='/use-application-dns.net/'
                 uci commit dhcp
                 
-                printf "\033[32;1mDnsmasq restart\033[0m\n"
+                log_info "Dnsmasq restart"
 
                 /etc/init.d/dnsmasq restart
             else
-                printf "\033[31;1mDNSCrypt not download list on /etc/dnscrypt-proxy2. Repeat install DNSCrypt by script.\033[0m\n"
+                log_info "\033[31;1mDNSCrypt not download list on /etc/dnscrypt-proxy2. Repeat install DNSCrypt by script."
             fi
     fi
 
     fi
 
     if [ "$DNS_RESOLVER" == 'STUBBY' ]; then
-        printf "\033[32;1mConfigure Stubby\033[0m\n"
+        log_info "Configure Stubby"
 
         if opkg list-installed | grep -q stubby; then
-            printf "\033[32;1mStubby already installed\033[0m\n"
+            log_info "Stubby already installed"
         else
-            printf "\033[32;1mInstalled stubby\033[0m\n"
+            log_info "Installed stubby"
             opkg install stubby
 
-            printf "\033[32;1mConfigure Dnsmasq for Stubby\033[0m\n"
+            log_info "Configure Dnsmasq for Stubby"
             uci set dhcp.@dnsmasq[0].noresolv="1"
             uci -q delete dhcp.@dnsmasq[0].server
             uci add_list dhcp.@dnsmasq[0].server="127.0.0.1#5453"
             uci add_list dhcp.@dnsmasq[0].server='/use-application-dns.net/'
             uci commit dhcp
 
-            printf "\033[32;1mDnsmasq restart\033[0m\n"
+            log_info "Dnsmasq restart"
 
             /etc/init.d/dnsmasq restart
         fi
@@ -222,15 +222,15 @@ add_dns_resolver() {
 add_packages() {
     for package in curl nano; do
         if opkg list-installed | grep -q "^$package "; then
-            printf "\033[32;1m$package already installed\033[0m\n"
+            log_info "$package already installed"
         else
-            printf "\033[32;1mInstalling $package...\033[0m\n"
+            log_info "Installing $package..."
             opkg install "$package"
             
             if "$package" --version >/dev/null 2>&1; then
-                printf "\033[32;1m$package was successfully installed and available\033[0m\n"
+                log_info "$package was successfully installed and available"
             else
-                printf "\033[31;1mError: failed to install $package\033[0m\n"
+                log_info "\033[31;1mError: failed to install $package"
                 exit 1
             fi
         fi
@@ -247,7 +247,7 @@ add_getdomains() {
     fi
 
     if [ "$COUNTRY" != '0' ]; then
-        printf "\033[32;1mCreate script /etc/init.d/getdomains\033[0m\n"
+        log_info "Create script /etc/init.d/getdomains"
 
 cat << EOF > /etc/init.d/getdomains
 #!/bin/sh /etc/rc.common
@@ -279,15 +279,15 @@ EOF
         /etc/init.d/getdomains enable
 
         if crontab -l | grep -q /etc/init.d/getdomains; then
-            printf "\033[32;1mCrontab already configured\033[0m\n"
+            log_info "Crontab already configured"
 
         else
             crontab -l | { cat; echo "0 */8 * * * /etc/init.d/getdomains start"; } | crontab -
-            printf "\033[32;1mIgnore this error. This is normal for a new installation\033[0m\n"
+            log_info "Ignore this error. This is normal for a new installation"
             /etc/init.d/cron restart
         fi
 
-        printf "\033[32;1mStart script\033[0m\n"
+        log_info "Start script"
 
         /etc/init.d/getdomains start
     fi
@@ -305,7 +305,7 @@ install_tun2socks(){
             exit 1
         fi
     else
-        printf "\033[32;1mtun2socks already installed\033[0m\n"
+        log_info "tun2socks already installed"
     fi
 
     # Check for tun2socks then move binary to /usr/bin
@@ -320,17 +320,24 @@ install_tun2socks(){
 add_tunnel(){
     # Check for existing config in /etc/config/network then add entry
     # Проверяет наличие конфигурации в /etc/config/network и добавляет запись
-    if ! uci get network.$TUNNEL >/dev/null 2>&1; then
-        printf "\033[32;1mConfigure interface\033[0m\n"
-        uci add network interface
-        uci set network.@interface[-1].name="$TUNNEL"
-        uci set network.@interface[-1].device='tun1'
-        uci set network.@interface[-1].proto='static'
-        uci set network.@interface[-1].ipaddr='172.16.10.1'
-        uci set network.@interface[-1].netmask='255.255.255.252'
+    if ! uci show network | grep -q $TUNNEL; then
+#    if ! uci get network.$TUNNEL >/dev/null 2>&1; then
+        log_info "Configure interface"
+        uci set network.$TUNNEL=interface
+        uci set network.$TUNNEL.device='tun1'
+        uci set network.$TUNNEL.proto='static'
+        uci set network.$TUNNEL.ipaddr='172.16.10.1'
+        uci set network.$TUNNEL.netmask='255.255.255.252'
+
+        # uci add network interface
+        # uci set network.@interface[-1].name="$TUNNEL"
+        # uci set network.@interface[-1].device='tun1'
+        # uci set network.@interface[-1].proto='static'
+        # uci set network.@interface[-1].ipaddr='172.16.10.1'
+        # uci set network.@interface[-1].netmask='255.255.255.252'
         uci commit network
     else
-        printf "\033[32;1mInterface '$TUNNEL' already exists\033[0m\n"
+        log_info "Interface '$TUNNEL' already exists"
     fi
 
     # Read user variable for Outline config
@@ -467,7 +474,7 @@ EOL
     # Start service
     # Запускает сервис
     /etc/init.d/tun2socks start
-    printf "\033[32;1mConfigure route for tun2socks\033[0m\n"
+    log_info "Configure route for tun2socks"
 }
 
 # Проверка: файл запущен напрямую или импортирован
