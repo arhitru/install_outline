@@ -444,7 +444,7 @@ main(){
     LOG_FILE="${LOG_DIR}/install_outline_vpn.log"
     PID_FILE="/var/run/${SCRIPT_NAME}.pid"
     LOCK_FILE="/var/lock/${SCRIPT_NAME}.lock"
-    CONFIG_FILE="/root/outline.conf"
+    OUTLINE_CONFIG_FILE="/root/outline.conf"
     RETRY_COUNT=5
 
     # Режим выполнения (auto/interactive)
@@ -471,7 +471,7 @@ main(){
     . /root/install_outline_settings.sh
     init_logging
     install_outline_settings
-    . $CONFIG_FILE
+    . $OUTLINE_CONFIG_FILE
 
     log_info 'Starting Outline OpenWRT install script'
 
