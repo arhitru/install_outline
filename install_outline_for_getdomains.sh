@@ -201,24 +201,6 @@ add_dns_resolver() {
     fi
 }
 
-add_packages() {
-    for package in curl nano kmod-tun ip-full; do
-        if opkg list-installed | grep -q "^$package "; then
-            log_info "$package already installed"
-        else
-            log_info "Installing $package..."
-            opkg install "$package"
-            
-            if "$package" --version >/dev/null 2>&1; then
-                log_warn "$package was successfully installed and available"
-            else
-                log_error "Error: failed to install $package"
-                exit 1
-            fi
-        fi
-    done
-}
-
 add_getdomains() {
     if [ "$COUNTRY" == 'russia_inside' ]; then
         EOF_DOMAINS=DOMAINS=https://raw.githubusercontent.com/itdoginfo/allow-domains/main/Russia/inside-dnsmasq-nfset.lst
@@ -459,9 +441,6 @@ EOL
 }
 
 main(){
-# Проверка: файл запущен напрямую или импортирован
-# if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # Прямой запуск - выполняем тесты или демо
     SCRIPT_NAME=$(basename "$0")
     SCRIPT_DIR=$(dirname "$0")
     LOG_DIR="/root"
@@ -483,21 +462,44 @@ main(){
     if [ ! -f "/root/logging_functions.sh" ]; then
         cd /root && wget https://raw.githubusercontent.com/arhitru/fuctions_bash/refs/heads/main/logging_functions.sh >> $LOG_FILE 2>&1 && chmod +x /root/logging_functions.sh
     fi
+    if [ ! -f "/root/opkg_functions.sh" ]; then
+        cd /root && wget https://raw.githubusercontent.com/arhitru/fuctions_bash/refs/heads/main/opkg_functions.sh >> $LOG_FILE 2>&1 && chmod +x /root/opkg_functions.sh
+    fi
     if [ ! -f "/root/install_outline_settings.sh" ]; then
         cd /root && wget https://raw.githubusercontent.com/arhitru/install_outline/refs/heads/main/install_outline_settings.sh >> $LOG_FILE 2>&1 && chmod +x /root/install_outline_settings.sh
     fi
 
     . /root/logging_functions.sh
+    . /root/opkg_functions.sh
     . /root/install_outline_settings.sh
     init_logging
     install_outline_settings
     . $CONFIG_FILE
 
     log_info 'Starting Outline OpenWRT install script'
-    #TUNNEL=tun2socks
-    dnsmasqfull
+
+        # Обновление списков пакетов
+    if ! update_opkg; then
+        log_error "Не удалось обновить списки пакетов"
+        exit 1
+    fi
+    
+    # Установка  пакетов
+    log_info "=== УСТАНОВКА ПАКЕТОВ ==="
+    for pkg in $REQUIRED_PACKAGES; do
+        install_package "$pkg"
+    done
+    
+    # Замена пакетов
+    log_info "=== ЗАМЕНА ПАКЕТОВ ==="
+    
+    for replace_pair in $REPLACE_PACKAGES; do
+        old_pkg=$(echo "$replace_pair" | cut -d: -f1)
+        new_pkg=$(echo "$replace_pair" | cut -d: -f2)
+        replace_package "$old_pkg" "$new_pkg"
+    done
+
     dnsmasqconfdir
-    add_packages
     add_mark
     install_tun2socks
     add_tunnel
@@ -507,12 +509,15 @@ main(){
     add_getdomains
     log_info 'Restarting Network....'
     # Restart network
-#     /etc/init.d/network restart
+     /etc/init.d/network restart
+}
+
+# Запуск основной функции
+# Проверка: файл запущен напрямую или импортирован
+# if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Прямой запуск - выполняем тесты или демо
+    main "$@"
 # else
 #     # Импортирован через source - только определяем функции
 #     return 0 2>/dev/null || true
 # fi
-}
-
-# Запуск основной функции
-main "$@"
