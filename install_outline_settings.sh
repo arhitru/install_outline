@@ -111,6 +111,27 @@ COUNTRY=$COUNTRY
 OUTLINE_DEFAULT_GATEWAY=$DEFAULT_GATEWAY
 VERSION_ID=$VERSION_ID
 
+# Список обязательных пакетов
+REQUIRED_PACKAGES="
+curl
+nano
+kmod-tun
+ip-full
+"
+
+# Пакеты для замены
+REPLACE_PACKAGES="
+dnsmasq:dnsmasq-full
+"
+
+# Таймаут для операций (секунды)
+OPKG_TIMEOUT=300
+
+# Количество попыток при ошибке
+RETRY_COUNT=3
+
+# Режим отладки (0/1)
+DEBUG=0
 EOF
         log_info "Создан файл конфигурации по умолчанию: $CONFIG_FILE"
     fi
