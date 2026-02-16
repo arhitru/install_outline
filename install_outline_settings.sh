@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install_outline_settings() {
-    if [ ! -f "$CONFIG_FILE" ]; then
+    if [ ! -f "$OUTLINE_CONFIG_FILE" ]; then
         export TUNNEL="tun2socks"
         # Проверка версии OpenWrt
         if [ -f /etc/os-release ]; then
@@ -99,7 +99,7 @@ install_outline_settings() {
             export OUTLINE_DEFAULT_GATEWAY=$DEFAULT_GATEWAY
         fi
         log_info "Файл конфигурации Outline"
-        cat > "$CONFIG_FILE" << EOF
+        cat > "$OUTLINE_CONFIG_FILE" << EOF
 # ============================================================================
 # Конфигурация outline_vpn
 # ============================================================================
@@ -133,7 +133,7 @@ RETRY_COUNT=3
 # Режим отладки (0/1)
 DEBUG=0
 EOF
-        log_info "Создан файл конфигурации по умолчанию: $CONFIG_FILE"
+        log_info "Создан файл конфигурации по умолчанию: $OUTLINE_CONFIG_FILE"
     fi
 }
 
