@@ -21,7 +21,7 @@ add_mark() {
     grep -q "99 vpn" /etc/iproute2/rt_tables || echo '99 vpn' >> /etc/iproute2/rt_tables
     
     if ! uci show network | grep -q mark0x1; then
-        printf "\033[32;1mConfigure mark rule\033[0m\n"
+        log_info "Configure mark rule"
         uci add network rule
         uci set network.@rule[-1].name='mark0x1'
         uci set network.@rule[-1].mark='0x1'
@@ -501,7 +501,7 @@ EOL
     . /root/logging_functions.sh
     . /root/install_outline_settings.sh
     install_outline_settings
-    #. $CONFIG_FILE
+    . $CONFIG_FILE
 
     log_info 'Starting Outline OpenWRT install script'
     #TUNNEL=tun2socks
