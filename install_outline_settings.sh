@@ -1,4 +1,4 @@
-#!/bin/bash
+\033[32;1m#!/bin/bash
 
 install_outline_settings() {
     if [ ! -f "$CONFIG_FILE" ]; then
@@ -25,18 +25,18 @@ install_outline_settings() {
         # Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
         read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
         export  OUTLINECONF=$OUTLINECONF
-        printf "\033[33mConfigure DNSCrypt2 or Stubby? It does matter if your ISP is spoofing DNS requests\033[0m\n"
-        echo "Select:"
-        echo "1) No [Default]"
-        echo "2) DNSCrypt2 (10.7M)"
-        echo "3) Stubby (36K)"
+        log_warn "Configure DNSCrypt2 or Stubby? It does matter if your ISP is spoofing DNS requests"
+        log_info "Select:"
+        log_info "1) No [Default]"
+        log_info "2) DNSCrypt2 (10.7M)"
+        log_info "3) Stubby (36K)"
 
         while true; do
         read -r -p '' DNS_RESOLVER
             case $DNS_RESOLVER in 
 
             1) 
-                echo "Skiped"
+                log_error "Skiped"
                 break
                 ;;
 
@@ -51,17 +51,17 @@ install_outline_settings() {
                 ;;
 
             *)
-                echo "Choose from the following options"
+                log_error "Choose from the following options"
                 ;;
             esac
         done
 
-        printf "\033[33mChoose you country\033[0m\n"
-        echo "Select:"
-        echo "1) Russia inside. You are inside Russia"
-        echo "2) Russia outside. You are outside of Russia, but you need access to Russian resources"
-        echo "3) Ukraine. uablacklist.net list"
-        echo "4) Skip script creation"
+        log_warn "Choose you country"
+        log_info "Select:"
+        log_info "1) Russia inside. You are inside Russia"
+        log_info "2) Russia outside. You are outside of Russia, but you need access to Russian resources"
+        log_info "3) Ukraine. uablacklist.net list"
+        log_info "4) Skip script creation"
 
         while true; do
         read -r -p '' COUNTRY
@@ -83,13 +83,13 @@ install_outline_settings() {
                 ;;
 
             4) 
-                echo "Skiped"
+                log_error "Skiped"
                 export COUNTRY=0
                 break
                 ;;
 
             *)
-                echo "Choose from the following options"
+                log_error "Choose from the following options"
                 ;;
             esac
         done
