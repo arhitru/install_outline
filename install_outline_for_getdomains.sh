@@ -507,6 +507,7 @@ EOL
 
     . /root/logging_functions.sh
     . /root/install_outline_settings.sh
+    init_logging
     install_outline_settings
     . $CONFIG_FILE
 
