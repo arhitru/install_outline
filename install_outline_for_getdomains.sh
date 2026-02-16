@@ -289,7 +289,7 @@ EOF
             /etc/init.d/cron restart
         fi
 
-        log_info "Start script"
+        log_info "Start script /etc/init.d/getdomains"
 
         /etc/init.d/getdomains start
     fi
@@ -316,6 +316,7 @@ install_tun2socks(){
         mv /tmp/tun2socks /usr/bin/ 
         log_info 'moving tun2socks to /usr/bin'
         chmod +x /usr/bin/tun2socks
+        log_info "tun2socks installed"
     fi
 }
 
@@ -343,8 +344,6 @@ add_tunnel(){
     fi
 
     # Read user variable for Outline config
-    # Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
-    # read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
     # Получение ip из ShadowSocks ссылок
     OUTLINEIP=$(echo "$OUTLINECONF" | grep -oE '@([0-9]{1,3}\.){3}[0-9]{1,3}' | cut -d'@' -f2)
 
@@ -415,12 +414,12 @@ reload_service() {
     start
 }
 EOL
-DEFAULT_GATEWAY=$OUTLINE_DEFAULT_GATEWAY
-# Ask user to use Outline as default gateway
-# Задает вопрос пользователю о том, следует ли использовать Outline в качестве шлюза по умолчанию
-# while [ "$DEFAULT_GATEWAY" != "y" ] && [ "$DEFAULT_GATEWAY" != "n" ]; do
-#     read -p "Use Outline as default gateway? [y/n]: " DEFAULT_GATEWAY
-# done
+        DEFAULT_GATEWAY=$OUTLINE_DEFAULT_GATEWAY
+        # Ask user to use Outline as default gateway
+        # Задает вопрос пользователю о том, следует ли использовать Outline в качестве шлюза по умолчанию
+        # while [ "$DEFAULT_GATEWAY" != "y" ] && [ "$DEFAULT_GATEWAY" != "n" ]; do
+        #     read -p "Use Outline as default gateway? [y/n]: " DEFAULT_GATEWAY
+        # done
 
         if [ "$DEFAULT_GATEWAY" = "y" ]; then
 		    cat <<EOL >> /etc/init.d/tun2socks
@@ -479,6 +478,7 @@ EOL
     log_info "Configure route for tun2socks"
 }
 
+main(){
 # Проверка: файл запущен напрямую или импортирован
 # if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     # Прямой запуск - выполняем тесты или демо
@@ -533,3 +533,7 @@ EOL
 #     # Импортирован через source - только определяем функции
 #     return 0 2>/dev/null || true
 # fi
+}
+
+# Запуск основной функции
+main "$@"
