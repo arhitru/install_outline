@@ -28,6 +28,8 @@ add_mark() {
         uci set network.@rule[-1].priority='100'
         uci set network.@rule[-1].lookup='vpn'
         uci commit
+    else
+        log_info "mark rule already exist"
     fi
 }
 
@@ -160,7 +162,7 @@ add_set() {
 add_dns_resolver() {
     DISK=$(df -m / | awk 'NR==2{ print $2 }')
     if [[ "$DISK" -lt 32 ]]; then 
-        log_info "\033[31;1mYour router a disk have less than 32MB. It is not recommended to install DNSCrypt, it takes 10MB"
+        log_error "Your router a disk have less than 32MB. It is not recommended to install DNSCrypt, it takes 10MB"
     fi
 
 
@@ -190,7 +192,7 @@ add_dns_resolver() {
 
                 /etc/init.d/dnsmasq restart
             else
-                log_info "\033[31;1mDNSCrypt not download list on /etc/dnscrypt-proxy2. Repeat install DNSCrypt by script."
+                log_info "DNSCrypt not download list on /etc/dnscrypt-proxy2. Repeat install DNSCrypt by script."
             fi
     fi
 
@@ -220,7 +222,7 @@ add_dns_resolver() {
 }
 
 add_packages() {
-    for package in curl nano; do
+    for package in curl nano kmod-tun ip-full; do
         if opkg list-installed | grep -q "^$package "; then
             log_info "$package already installed"
         else
@@ -228,9 +230,9 @@ add_packages() {
             opkg install "$package"
             
             if "$package" --version >/dev/null 2>&1; then
-                log_info "$package was successfully installed and available"
+                log_warn "$package was successfully installed and available"
             else
-                log_info "\033[31;1mError: failed to install $package"
+                log_error "Error: failed to install $package"
                 exit 1
             fi
         fi
@@ -301,7 +303,7 @@ install_tun2socks(){
         wget https://github.com/1andrevich/outline-install-wrt/releases/latest/download/tun2socks-linux-$ARCH -O /tmp/tun2socks
         # Check wget's exit status
         if [ $? -ne 0 ]; then
-            echo "Download failed. No file for your Router's architecture"
+            log_error "Download failed. No file for your Router's architecture"
             exit 1
         fi
     else
@@ -312,7 +314,7 @@ install_tun2socks(){
     # Проверяет наличие tun2socks и перемещает бинарник в /usr/bin
     if [ ! -f "/usr/bin/tun2socks" ]; then
         mv /tmp/tun2socks /usr/bin/ 
-        echo 'moving tun2socks to /usr/bin'
+        log_info 'moving tun2socks to /usr/bin'
         chmod +x /usr/bin/tun2socks
     fi
 }
@@ -349,12 +351,12 @@ add_tunnel(){
     # Check for default gateway and save it into DEFGW
     # Проверяет наличие шлюза по умолчанию и сохраняет его в переменную DEFGW
     DEFGW=$(ip route | grep default | awk '{print $3}')
-    echo 'checked default gateway'
+    log_info 'checked default gateway'
 
     # Check for default interface and save it into DEFIF
     # Проверяет наличие интерфейса по умолчанию и сохраняет его в переменную DEFIF
     DEFIF=$(ip route | grep default | awk '{print $5}')
-    echo 'checked default interface'
+    log_info 'checked default interface'
 
     # Create script /etc/init.d/tun2socks
     # Создает скрипт /etc/init.d/tun2socks
@@ -448,7 +450,7 @@ if ! ip route | grep -q '\''^default via 172.16.10.2 dev tun1'\''; then\
     /etc/init.d/tun2socks start\
 fi\
 ' /etc/rc.local > /tmp/rc.local.tmp && mv /tmp/rc.local.tmp /etc/rc.local
-		echo "All traffic would be routed through Outline"
+		log_warn "All traffic would be routed through Outline"
             fi
 	    else
 		    cat <<EOL >> /etc/init.d/tun2socks
@@ -456,10 +458,10 @@ start() {
     start_service
 }
 EOL
-		    echo "No changes to default gateway"
+		    log_info "No changes to default gateway"
         fi
 
-        echo 'script /etc/init.d/tun2socks created'
+        log_info 'script /etc/init.d/tun2socks created'
 
         chmod +x /etc/init.d/tun2socks
     fi
@@ -468,7 +470,7 @@ EOL
     #  Создает символическую ссылку
     if [ ! -f "/etc/rc.d/S99tun2socks" ]; then
     ln -s /etc/init.d/tun2socks /etc/rc.d/S99tun2socks
-    echo '/etc/init.d/tun2socks /etc/rc.d/S99tun2socks symlink created'
+    log_info '/etc/init.d/tun2socks /etc/rc.d/S99tun2socks symlink created'
     fi
 
     # Start service
