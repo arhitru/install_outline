@@ -1,4 +1,4 @@
-\033[32;1m#!/bin/bash
+#!/bin/bash
 
 install_outline_settings() {
     if [ ! -f "$CONFIG_FILE" ]; then
