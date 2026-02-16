@@ -87,26 +87,6 @@ add_zone() {
     fi
 }
 
-install_pkg(){
-    # Check for kmod-tun 
-    # Проверяет наличие kmod-tun
-    if opkg list-installed | grep -q kmod-tun; then
-        log_info "kmod-tun already installed"
-    else
-        log_info "Installed kmod-tun"
-        opkg install kmod-tun
-    fi
-
-    # Check for ip-full
-    # Проверяет наличие ip-full
-    if opkg list-installed | grep -q ip-full; then
-        log_info "ip-full already installed"
-    else
-        echo "Installed ip-full"
-        opkg install ip-full
-    fi
-}
-
 dnsmasqfull() {
     if opkg list-installed | grep -q dnsmasq-full; then
         log_info "dnsmasq-full already installed"
@@ -517,7 +497,6 @@ main(){
     #TUNNEL=tun2socks
     dnsmasqfull
     dnsmasqconfdir
-    install_pkg
     add_packages
     add_mark
     install_tun2socks
