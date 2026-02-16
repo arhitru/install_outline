@@ -147,3 +147,15 @@ EOF
 #     # Импортирован через source - только определяем функции
 #     return 0 2>/dev/null
 # fi
+# Запуск основной функции
+# Проверяем, запущен ли скрипт напрямую (не через source)
+case "$0" in
+    *install_outline_settings.sh|*sh)
+        config_settings
+        install_outline_settings
+        ;;
+    *)
+        # Скрипт импортирован через source
+        return 0 2>/dev/null || true
+        ;;
+esac
