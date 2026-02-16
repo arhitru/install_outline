@@ -117,7 +117,7 @@ install_outline_settings() {
             export OUTLINE_DEFAULT_GATEWAY=$DEFAULT_GATEWAY
         fi
         log_info "Файл конфигурации Outline"
-        cat > "$CONFIG_FILE" << 'EOF'
+        cat > "$CONFIG_FILE" << EOF
 # ============================================================================
 # Конфигурация outline_vpn
 # ============================================================================
