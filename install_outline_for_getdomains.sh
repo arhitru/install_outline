@@ -513,9 +513,6 @@ main(){
     rm -f /root/install_outline_for_getdomains.sh
     log_info "Скрипт удален"
 
-    # 3. Создаем флаг завершения
-    log_info "COMPLETED_AT_$(date +%s)" > /root/.postboot_done
-
     log_info "=== Post-boot завершен: $(date) ==="
 
     log_info 'Restarting Network....'
