@@ -28,9 +28,20 @@ install_outline_settings() {
         export  OUTLINECONF=$OUTLINECONF
 
         log_question "Configure DNSCrypt2 or Stubby? It does matter if your ISP is spoofing DNS requests"
+        echo ""
+        printf "\n"
         log_question "Select:"
+        echo ""
+        printf "\n"
+        echo ""
         log_question "1) No [Default]"
+        echo ""
+        printf "\n"
+        echo ""
         log_question "2) DNSCrypt2 (10.7M)"
+        echo ""
+        printf "\n"
+        echo ""
         log_question "3) Stubby (36K)"
 
         while true; do
@@ -61,6 +72,7 @@ install_outline_settings() {
         done
 
         log_question "Choose you country"
+        log_question "\n"
         log_question "Select:"
         log_question "1) Russia inside. You are inside Russia"
         log_question "2) Russia outside. You are outside of Russia, but you need access to Russian resources"
