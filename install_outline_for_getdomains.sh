@@ -84,18 +84,6 @@ add_zone() {
     fi
 }
 
-dnsmasqfull() {
-    if opkg list-installed | grep -q dnsmasq-full; then
-        log_info "dnsmasq-full already installed"
-    else
-        log_info "Installed dnsmasq-full"
-        cd /tmp/ && opkg download dnsmasq-full
-        opkg remove dnsmasq && opkg install dnsmasq-full --cache /tmp/
-
-        [ -f /etc/config/dhcp-opkg ] && cp /etc/config/dhcp /etc/config/dhcp-old && mv /etc/config/dhcp-opkg /etc/config/dhcp
-    fi
-}
-
 dnsmasqconfdir() {
     if [ -n "$VERSION_ID" ] && [ "$VERSION_ID" -ge 24 ] 2>/dev/null; then
         if uci get dhcp.@dnsmasq[0].confdir | grep -q /tmp/dnsmasq.d; then
@@ -504,6 +492,32 @@ main(){
     add_set
     add_dns_resolver
     add_getdomains
+
+    # --------------------------------------------------
+    # ОЧИСТКА: делаем запуск однократным
+    # --------------------------------------------------
+    log_info "Очистка..."
+
+    # 1. Удаляем вызов из rc.local
+    if [ -f /etc/rc.local ]; then
+        # Создаем чистую версию без нашего вызова
+        grep -v "install_outline_for_getdomains.sh" /etc/rc.local > /root/rc.local.new
+        if [ $? -eq 0 ]; then
+            mv /root/rc.local.new /etc/rc.local
+            chmod +x /etc/rc.local
+            log_info "install_outline_for_getdomains yдален из rc.local"
+        fi
+    fi
+
+    # 2. Удаляем сам скрипт
+    rm -f /root/install_outline_for_getdomains.sh
+    log_info "Скрипт удален"
+
+    # 3. Создаем флаг завершения
+    log_info "COMPLETED_AT_$(date +%s)" > /root/.postboot_done
+
+    log_info "=== Post-boot завершен: $(date) ==="
+
     log_info 'Restarting Network....'
     # Restart network
      /etc/init.d/network restart
