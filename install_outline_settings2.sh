@@ -27,22 +27,11 @@ install_outline_settings() {
         read OUTLINECONF
         export  OUTLINECONF=$OUTLINECONF
 
-        log_question "Configure DNSCrypt2 or Stubby? It does matter if your ISP is spoofing DNS requests"
-        echo ""
-        printf "\n"
-        log_question "Select:"
-        echo ""
-        printf "\n"
-        echo ""
-        log_question "1) No [Default]"
-        echo ""
-        printf "\n"
-        echo ""
-        log_question "2) DNSCrypt2 (10.7M)"
-        echo ""
-        printf "\n"
-        echo ""
-        log_question "3) Stubby (36K)"
+        log_questions "Configure DNSCrypt2 or Stubby? It does matter if your ISP is spoofing DNS requests"
+        log_questions "Select:"
+        log_questions "1) No [Default]"
+        log_questions "2) DNSCrypt2 (10.7M)"
+        log_questions "3) Stubby (36K)"
 
         while true; do
         read -r -p '' DNS_RESOLVER
@@ -71,13 +60,12 @@ install_outline_settings() {
             esac
         done
 
-        log_question "Choose you country"
-        log_question "\n"
-        log_question "Select:"
-        log_question "1) Russia inside. You are inside Russia"
-        log_question "2) Russia outside. You are outside of Russia, but you need access to Russian resources"
-        log_question "3) Ukraine. uablacklist.net list"
-        log_question "4) Skip script creation"
+        log_questions "Choose you country"
+        log_questions "Select:"
+        log_questions "1) Russia inside. You are inside Russia"
+        log_questions "2) Russia outside. You are outside of Russia, but you need access to Russian resources"
+        log_questions "3) Ukraine. uablacklist.net list"
+        log_questions "4) Skip script creation"
 
         while true; do
         read -r -p '' COUNTRY
