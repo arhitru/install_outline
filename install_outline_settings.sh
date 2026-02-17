@@ -23,79 +23,87 @@ install_outline_settings() {
         fi
 
         # Считывает пользовательскую переменную для конфигурации Outline (Shadowsocks)
-        read -p "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): " OUTLINECONF
+        log_question "Enter Outline (Shadowsocks) Config (format ss://base64coded@HOST:PORT/?outline=1): "
+        read OUTLINECONF
         export  OUTLINECONF=$OUTLINECONF
-        log_warn "Configure DNSCrypt2 or Stubby? It does matter if your ISP is spoofing DNS requests"
-        log_info "Select:"
-        log_info "1) No [Default]"
-        log_info "2) DNSCrypt2 (10.7M)"
-        log_info "3) Stubby (36K)"
+
+        log_questions "Configure DNSCrypt2 or Stubby? It does matter if your ISP is spoofing DNS requests"
+        log_questions "Select:"
+        log_questions "1) No [Default]"
+        log_questions "2) DNSCrypt2 (10.7M)"
+        log_questions "3) Stubby (36K)"
 
         while true; do
         read -r -p '' DNS_RESOLVER
             case $DNS_RESOLVER in 
 
             1) 
-                log_error "Skiped"
+                log_info "Skiped"
                 break
                 ;;
 
             2)
+                log_info "DNSCRYPT"
                 export DNS_RESOLVER="DNSCRYPT"
                 break
                 ;;
 
             3) 
+                log_info "STUBBY"
                 export DNS_RESOLVER="STUBBY"
                 break
                 ;;
 
             *)
-                log_error "Choose from the following options"
+                log_warn "Choose from the following options"
                 ;;
             esac
         done
 
-        log_warn "Choose you country"
-        log_info "Select:"
-        log_info "1) Russia inside. You are inside Russia"
-        log_info "2) Russia outside. You are outside of Russia, but you need access to Russian resources"
-        log_info "3) Ukraine. uablacklist.net list"
-        log_info "4) Skip script creation"
+        log_questions "Choose you country"
+        log_questions "Select:"
+        log_questions "1) Russia inside. You are inside Russia"
+        log_questions "2) Russia outside. You are outside of Russia, but you need access to Russian resources"
+        log_questions "3) Ukraine. uablacklist.net list"
+        log_questions "4) Skip script creation"
 
         while true; do
         read -r -p '' COUNTRY
             case $COUNTRY in 
 
             1) 
+                log_info "Russia inside. You are inside Russia"
                 export COUNTRY="russia_inside"
                 break
                 ;;
 
             2)
+                log_info "Russia outside. You are outside of Russia, but you need access to Russian resources"
                 export COUNTRY="russia_outside"
                 break
                 ;;
 
             3) 
+                log_info "Ukraine. uablacklist.net list"
                 export COUNTRY="ukraine"
                 break
                 ;;
 
             4) 
-                log_error "Skiped"
+                log_warn "Skiped"
                 export COUNTRY=0
                 break
                 ;;
 
             *)
-                log_error "Choose from the following options"
+                log_warn "Choose from the following options"
                 ;;
             esac
         done
         # Ask user to use Outline as default gateway
         # Задает вопрос пользователю о том, следует ли использовать Outline в качестве шлюза по умолчанию
-        read -p "Use Outline as default gateway? [y/n]: " DEFAULT_GATEWAY
+        log_question "Use Outline as default gateway? [y/N]: "
+        read DEFAULT_GATEWAY
         if [ "$DEFAULT_GATEWAY" = "y" ] || [ "$DEFAULT_GATEWAY" = "Y" ]; then
             export OUTLINE_DEFAULT_GATEWAY=$DEFAULT_GATEWAY
         fi
@@ -137,24 +145,3 @@ EOF
         log_info "Создан файл конфигурации по умолчанию: $OUTLINE_CONFIG_FILE"
     fi
 }
-
-# Проверка: файл запущен напрямую или импортирован
-# if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # # Прямой запуск - выполняем тесты или демо
-    # config_settings
-    # install_outline_settings
-# else
-#     # Импортирован через source - только определяем функции
-#     return 0 2>/dev/null
-# fi
-# Запуск основной функции
-# Проверяем, запущен ли скрипт напрямую (не через source)
-case "$0" in
-    *install_outline_settings.sh|*sh)
-        install_outline_settings
-        ;;
-    *)
-        # Скрипт импортирован через source
-        return 0 2>/dev/null || true
-        ;;
-esac
