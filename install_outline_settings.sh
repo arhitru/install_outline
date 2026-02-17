@@ -151,7 +151,6 @@ EOF
 # Проверяем, запущен ли скрипт напрямую (не через source)
 case "$0" in
     *install_outline_settings.sh|*sh)
-        config_settings
         install_outline_settings
         ;;
     *)
