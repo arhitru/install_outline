@@ -438,15 +438,41 @@ main(){
     # Режим выполнения (auto/interactive)
     if [ "$1" = "--auto" ] || [ "$1" = "-a" ]; then
         AUTO_MODE=1
-        export AUTO_MODE
     else
         AUTO_MODE=0
-        export AUTO_MODE
+        # Определяем режим выполнения (интерактивный или автоматический)
+        if [ ! -t 0 ]; then
+            AUTO_MODE=1
+        fi
     fi
+    export AUTO_MODE
 
+    # ============================================================================
+    # Импорт функций логирования
+    # ============================================================================
     if [ ! -f "/root/logging_functions.sh" ]; then
         cd /root && wget https://raw.githubusercontent.com/arhitru/fuctions_bash/refs/heads/main/logging_functions.sh >> $LOG_FILE 2>&1 && chmod +x /root/logging_functions.sh
     fi
+    . /root/logging_functions.sh
+
+    # Инициализируем логирование
+    init_logging
+
+    # Проверяем что система загрузилась
+    log_info "Проверка системы:"
+    uptime >> $LOG_FILE 2>&1
+    ifconfig >> $LOG_FILE 2>&1
+
+    # Ждем запуска сети
+    log_info "Ожидание сети..."
+    for i in $(seq 1 30); do
+        if ping -c 1 -W 1 8.8.8.8 >/dev/null 2>&1; then
+            log_success "Сеть доступна"
+            break
+        fi
+        sleep 1
+    done
+
     if [ ! -f "/root/opkg_functions.sh" ]; then
         cd /root && wget https://raw.githubusercontent.com/arhitru/fuctions_bash/refs/heads/main/opkg_functions.sh >> $LOG_FILE 2>&1 && chmod +x /root/opkg_functions.sh
     fi
@@ -454,10 +480,8 @@ main(){
         cd /root && wget https://raw.githubusercontent.com/arhitru/install_outline/refs/heads/main/install_outline_settings.sh >> $LOG_FILE 2>&1 && chmod +x /root/install_outline_settings.sh
     fi
 
-    . /root/logging_functions.sh
     . /root/opkg_functions.sh
     . /root/install_outline_settings.sh
-    init_logging
     install_outline_settings
     . $OUTLINE_CONFIG_FILE
 
