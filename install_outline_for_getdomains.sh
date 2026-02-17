@@ -429,7 +429,7 @@ main(){
     SCRIPT_NAME=$(basename "$0")
     SCRIPT_DIR=$(dirname "$0")
     LOG_DIR="/root"
-    LOG_FILE="${LOG_DIR}/install_outline_vpn.log"
+    LOG_FILE="${LOG_DIR}/${SCRIPT_NAME}.log"
     PID_FILE="/var/run/${SCRIPT_NAME}.pid"
     LOCK_FILE="/var/lock/${SCRIPT_NAME}.lock"
     OUTLINE_CONFIG_FILE="/root/outline.conf"
