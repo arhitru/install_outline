@@ -510,13 +510,4 @@ main(){
 }
 
 # Запуск основной функции
-# Проверяем, запущен ли скрипт напрямую (не через source)
-case "$0" in
-    *install_outline_for_getdomains.sh|*sh)
-        main "$@"
-        ;;
-    *)
-        # Скрипт импортирован через source
-        return 0 2>/dev/null || true
-        ;;
-esac
+main "$@"
