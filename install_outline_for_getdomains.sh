@@ -541,7 +541,7 @@ main(){
 
     log_info 'Restarting Network....'
     # Restart network
-     /etc/init.d/network restart
+    /etc/init.d/network restart
 }
 
 # Запуск основной функции
