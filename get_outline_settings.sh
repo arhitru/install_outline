@@ -33,29 +33,12 @@ main(){
     # Инициализируем логирование
     init_logging
 
-    # Проверяем что система загрузилась
-    log_info "Проверка системы:"
-    uptime >> $LOG_FILE 2>&1
-    ifconfig >> $LOG_FILE 2>&1
-
-    # Ждем запуска сети
-    log_info "Ожидание сети..."
-    for i in $(seq 1 30); do
-        if ping -c 1 -W 1 8.8.8.8 >/dev/null 2>&1; then
-            log_success "Сеть доступна"
-            break
-        fi
-        sleep 1
-    done
-
     if [ ! -f "/root/install_outline_settings.sh" ]; then
         cd /root && wget https://raw.githubusercontent.com/arhitru/install_outline/refs/heads/main/install_outline_settings.sh >> $LOG_FILE 2>&1 && chmod +x /root/install_outline_settings.sh
     fi
 
     . /root/install_outline_settings.sh
     install_outline_settings
-    . $OUTLINE_CONFIG_FILE
-
 }
 
 # Запуск основной функции
