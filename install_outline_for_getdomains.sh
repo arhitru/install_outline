@@ -24,7 +24,7 @@ add_mark() {
         uci set network.@rule[-1].mark='0x1'
         uci set network.@rule[-1].priority='100'
         uci set network.@rule[-1].lookup='vpn'
-        uci commit
+        uci commit network
     else
         log_info "mark rule already exist"
     fi
@@ -104,7 +104,7 @@ add_set() {
         uci add firewall ipset
         uci set firewall.@ipset[-1].name='vpn_domains'
         uci set firewall.@ipset[-1].match='dst_net'
-        uci commit
+        uci commit firewall
     fi
     if uci show firewall | grep -q "@rule.*name='mark_domains'"; then
         log_info "Rule for set already exist"
@@ -120,7 +120,7 @@ add_set() {
         uci set firewall.@rule[-1].set_mark='0x1'
         uci set firewall.@rule[-1].target='MARK'
         uci set firewall.@rule[-1].family='ipv4'
-        uci commit
+        uci commit firewall
     fi
 }
 
@@ -274,6 +274,7 @@ add_tunnel(){
 #    if ! uci get network.$TUNNEL >/dev/null 2>&1; then
         log_info "Configure interface"
         uci set network.$TUNNEL=interface
+        uci set network.$TUNNEL.name="$TUNNEL"
         uci set network.$TUNNEL.device='tun1'
         uci set network.$TUNNEL.proto='static'
         uci set network.$TUNNEL.ipaddr='172.16.10.1'
@@ -455,33 +456,23 @@ main(){
     fi
     . /root/logging_functions.sh
 
-    # Инициализируем логирование
-    init_logging
-
-    # Проверяем что система загрузилась
-    log_info "Проверка системы:"
-    uptime >> $LOG_FILE 2>&1
-    ifconfig >> $LOG_FILE 2>&1
-
-    # Ждем запуска сети
-    log_info "Ожидание сети..."
-    for i in $(seq 1 30); do
-        if ping -c 1 -W 1 8.8.8.8 >/dev/null 2>&1; then
-            log_success "Сеть доступна"
-            break
-        fi
-        sleep 1
-    done
-
+    # ============================================================================
+    # Функции работы с opkg
+    # ============================================================================
     if [ ! -f "/root/opkg_functions.sh" ]; then
         cd /root && wget https://raw.githubusercontent.com/arhitru/fuctions_bash/refs/heads/main/opkg_functions.sh >> $LOG_FILE 2>&1 && chmod +x /root/opkg_functions.sh
     fi
+
+    # Инициализируем логирование
+    init_logging
+
     if [ ! -f "/root/install_outline_settings.sh" ]; then
         cd /root && wget https://raw.githubusercontent.com/arhitru/install_outline/refs/heads/main/install_outline_settings.sh >> $LOG_FILE 2>&1 && chmod +x /root/install_outline_settings.sh
     fi
 
     . /root/opkg_functions.sh
     . /root/install_outline_settings.sh
+
     install_outline_settings
     . $OUTLINE_CONFIG_FILE
 
